@@ -1,0 +1,154 @@
+{
+  "genres": [
+    {
+      "id": 1,
+      "name": "Shonen",
+      "description": "Shounen là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nam trẻ tuổi, thường từ 12 đến 18 tuổi."
+    },
+    {
+      "id": 2,
+      "name": "Shoujo",
+      "description": "Shoujo là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nữ trẻ tuổi, thường từ 12 đến 18 tuổi."
+    },
+    {
+      "id": 3,
+      "name": "Romance",
+      "description": "Romance là thể loại truyện tranh Nhật Bản tập trung vào các mối quan hệ tình cảm và tình yêu."
+    },
+    {
+      "id": 4,
+      "name": "Comedy",
+      "description": "Comedy là thể loại truyện tranh Nhật Bản mang tính hài hước, giải trí."
+    },
+    {
+      "id": 5,
+      "name": "Tragedy",
+      "description": "Tragedy là thể loại truyện tranh Nhật Bản tập trung vào các tình huống bi thảm và đau lòng."
+    },
+    {
+      "id": 6,
+      "name": "Võ Thuật",
+      "description": "Võ Thuật là thể loại truyện tranh Nhật Bản mô tả các kỹ năng võ thuật và cuộc chiến."
+    },
+    {
+      "id": 7,
+      "name": "Drama",
+      "description": "Drama là thể loại truyện tranh Nhật Bản tập trung vào các tình huống kịch tính và cảm xúc."
+    },
+    {
+      "id": 8,
+      "name": "Harem",
+      "description": "Harem là thể loại truyện tranh Nhật Bản mô tả một nhóm người (thường là nữ) quanh một nhân vật nam."
+    },
+    {
+      "id": 9,
+      "name": "Isekai",
+      "description": "Isekai là thể loại truyện tranh Nhật Bản mô tả nhân vật được chuyển sinh hoặc di chuyển đến một thế giới giả tưởng."
+    },
+    {
+      "id": 10,
+      "name": "Fantasy",
+      "description": "Fantasy là thể loại truyện tranh Nhật Bản tập trung vào yếu tố giả tưởng và thế giới tưởng tượng."
+    },
+    {
+      "id": 11,
+      "name": "Sci-fi",
+      "description": "Sci-fi là thể loại truyện tranh Nhật Bản tập trung vào khoa học và công nghệ."
+    },
+    {
+      "id": 12,
+      "name": "Slice of Life",
+      "description": "Slice of Life là thể loại truyện tranh Nhật Bản mô tả các tình huống đời thường và cuộc sống hàng ngày."
+    }
+  ],
+  "mangaByGenre": {
+    "1": [
+      {
+        "id": 1,
+        "title": "One Piece",
+        "cover": "https://i.imgur.com/1n7f1bF.jpg"
+      },
+      {
+        "id": 2,
+        "title": "Naruto",
+        "cover": "https://i.imgur.com/2n7f1bF.jpg"
+      },
+      {
+        "id": 3,
+        "title": "Dragon Ball",
+        "cover": "https://i.imgur.com/3n7f1bF.jpg"
+      }
+    ],
+    "2": [
+      {
+        "id": 4,
+        "title": "Ouran Highschool Host Club",
+        "cover": "https://i.imgur.com/4n7f1bF.jpg"
+      },
+      {
+        "id": 5,
+        "title": "Fruits Basket",
+        "cover": "https://i.imgur.com/5n7f1bF.jpg"
+      }
+    ],
+    "3": [
+      {
+        "id": 6,
+        "title": "Kaguya-sama: Love Is War",
+        "cover": "https://i.imgur.com/6n7f1bF.jpg"
+      },
+      {
+        "id": 7,
+        "title": "Horimiya",
+        "cover": "https://i.imgur.com/7n7f1bF.jpg"
+      }
+    ]
+  },
+  "allMangas": [
+    {
+      "id": 1,
+      "title": "One Piece",
+      "cover": "https://i.imgur.com/1n7f1bF.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Naruto",
+      "cover": "https://i.imgur.com/2n7f1bF.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Dragon Ball",
+      "cover": "https://i.imgur.com/3n7f1bF.jpg"
+    },
+    {
+      "id": 4,
+      "title": "Ouran Highschool Host Club",
+      "cover": "https://i.imgur.com/4n7f1bF.jpg"
+    },
+    {
+      "id": 5,
+      "title": "Fruits Basket",
+      "cover": "https://i.imgur.com/5n7f1bF.jpg"
+    },
+    {
+      "id": 6,
+      "title": "Kaguya-sama: Love Is War",
+      "cover": "https://i.imgur.com/6n7f1bF.jpg"
+    },
+    {
+      "id": 7,
+      "title": "Horimiya",
+      "cover": "https://i.imgur.com/7n7f1bF.jpg"
+    },
+    {
+      "id": 8,
+      "title": "Attack on Titan",
+      "cover": "https://i.imgur.com/8n7f1bF.jpg"
+    },
+    {
+      "id": 9,
+      "title": "Demon Slayer",
+      "cover": "https://i.imgur.com/9n7f1bF.jpg"
+    }
+  ]
+}
