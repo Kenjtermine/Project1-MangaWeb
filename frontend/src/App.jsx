@@ -5,7 +5,8 @@ import Login from "./pages/authentication/Login";
 import Register from "./pages/authentication/Register";
 import MainLayout from "./layouts/MainLayOut";
 import SearchPage from "./pages/searchtable/SearchPage";
-
+import AddComic from './pages/admin/AddComic';
+import AddChapter from "./pages/admin/AddChapter";
 function App() {
   return (
     <Router>
@@ -17,6 +18,9 @@ function App() {
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin/add-comic" element={<AddComic />} />
+        <Route path="/admin/add-comic" element={<AddComic />} />
+        <Route path="/admin/add-chapter" element={<AddChapter />} /> 
       </Routes>
     </Router>
   );
