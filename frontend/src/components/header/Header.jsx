@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { getUserLogin } from "../../data/api"; // Import hàm lấy thông tin người dùng hiện tại
 
 const Header = () => {
     const [placeholder, setPlaceholder] = useState("Tìm kiếm");
     const [searchValue, setSearchValue] = useState("");
     const navigate = useNavigate();
+
+    const user = getUserLogin(); // Lấy thông tin người dùng hiện tại
 
     const defaultPlaceholder = "Tìm kiếm";
     const activePlaceholder = "Hôm nay bạn muốn tìm gì nhỉ?";
@@ -31,6 +34,11 @@ const Header = () => {
                 setPlaceholder(defaultPlaceholder);
             }
         }
+    };
+
+    const handleLogOut = () => {
+        localStorage.removeItem("currentUserId"); // Xóa thông tin đăng nhập khỏi localStorage
+        window.location.href = "/"; // Chuyển về trang chủ sau khi đăng xuất
     };
 
 	return (
@@ -62,13 +70,33 @@ const Header = () => {
                         🔍
                     </button>
                     {/* Login and Sign up buttons */}
-                    <div className="ml-20 flex">
-                        <Link to="/login">
-                               <button className="bg-sky-600 hover:bg-sky-700 text-white font-semibold w-28 h-10 transition text-base">Đăng nhập</button>
-                        </Link>
-                        <Link to="/register">
-                               <button className="bg-transparent text-black-600 hover:bg-blue-50 font-semibold w-28 h-10 transition text-base ml-2">Đăng kí</button>
-                        </Link>
+                    <div className="ml-20 flex items-center">
+                        {user ? (
+                            <>
+                                <Link to="/profile">
+                                    <div className="flex flex-row items-center gap-2 pr-8">
+                                        <img 
+                                            src={user?.avatar || "https://i.imgur.com/1n7f1bF.jpg"} 
+                                            alt="Profile" 
+                                            className="h-10 w-10 rounded-full"
+                                        />
+                                        <span className="font-semibold whitespace-nowrap">{user?.username || "User"}</span>
+                                    </div>
+                                </Link>
+                                <button onClick={handleLogOut} className="bg-red-600 hover:bg-red-700 text-white font-semibold w-28 h-10 transition text-base ml-2">
+                                    Đăng xuất
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login">
+                                    <button className="bg-sky-600 hover:bg-sky-700 text-white font-semibold w-28 h-10 transition text-base">Đăng nhập</button>
+                                </Link>
+                                <Link to="/register">
+                                    <button className="bg-transparent text-black-600 hover:bg-blue-50 font-semibold w-28 h-10 transition text-base ml-2">Đăng kí</button>
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
 			</div>
