@@ -4,7 +4,10 @@ import { Link } from "react-router-dom";
 import GenreList from "../genre-list/GenreList";
 import useClickOutside from "../../hooks/useClickOutside";
 
+import { getUserNotification } from "../../data/api"; // Import hàm lấy thông báo của người dùng
+
 const Sidebar = () => {
+    const notificationCount = getUserNotification().filter(noti => noti.is_read === false).length; // Lấy số lượng thông báo chưa đọc
     const [isGenreOpen, setIsGenreOpen] = useState(false);
     // Sử dụng hook: Truyền vào một hàm để đóng popup
     // domNode trả về sẽ được dùng làm mốc (ref)
@@ -40,6 +43,16 @@ const Sidebar = () => {
                             {isGenreOpen && <GenreList />}
                         </div>
                     </li>
+                    {/* MỞ RỘNG NẾU CẦN: <li><Link to="/authors" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Tác giả</Link></li> */}
+                    <li><Link to="/notifications" className="block py-2 px-3 rounded hover:bg-sky-700 transition flex justify-between">
+                        <span>Thông báo</span>
+                        {/* Badge số lượng thông báo mới */}
+                        {notificationCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full justify-center items-center flex">
+                                {notificationCount > 99 ? '99+' : notificationCount}
+                            </span>
+                        )}
+                    </Link></li>
                     
                 </ul>
             </div>

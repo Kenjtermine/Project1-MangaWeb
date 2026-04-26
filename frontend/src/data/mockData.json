@@ -1,12 +1,41 @@
 {
-  "genres": [
-    {
-      "id": 1,
-      "name": "Shonen",
-      "description": "Shounen là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nam trẻ tuổi, thường từ 12 đến 18 tuổi."
-    },
-    {
-      "id": 2,
+    "users": [
+        {
+            "id": 1,
+            "username": "Anh Kiet",
+            "email": "kiet.bui2k5@hcmut.edu.vn",
+            "password": "123456",
+            "avatar": "https://i.imgur.com/1n7f1bF.jpg",
+            "role": "User",
+            "gender": "Nam"
+        },
+        {
+            "id": 2,
+            "username": "Khang Le",
+            "email": "le.khang@hcmut.edu.vn",
+            "password": "123456",
+            "avatar": "https://i.imgur.com/2n7f1bF.jpg",
+            "role": "User",
+            "gender": "Nam"
+        },
+        {
+            "id": 3,
+            "username": "Lam Vu",
+            "email": "vu.lam@hcmut.edu.vn",
+            "password": "123456",
+            "avatar": "https://i.imgur.com/3n7f1bF.jpg",
+            "role": "User",
+            "gender": "Nam"
+        }
+    ],
+    "genres": [
+        {
+            "id": 1,
+            "name": "Shonen",
+            "description": "Shounen là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nam trẻ tuổi, thường từ 12 đến 18 tuổi."
+        },
+        {
+            "id": 2,
       "name": "Shoujo",
       "description": "Shoujo là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nữ trẻ tuổi, thường từ 12 đến 18 tuổi."
     },
@@ -149,6 +178,97 @@
       "id": 9,
       "title": "Demon Slayer",
       "cover": "https://i.imgur.com/9n7f1bF.jpg"
+    }
+  ],
+  "authors": [
+    {
+      "id": 1,
+      "name": "Eiichiro Oda",
+      "photo": "https://i.imgur.com/1n7f1bF.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Masashi Kishimoto",
+      "photo": "https://i.imgur.com/2n7f1bF.jpg"
+    },
+    {
+      "id": 3,
+      "name": "Akira Toriyama",
+      "photo": "https://i.imgur.com/3n7f1bF.jpg"
+    }
+  ],
+  "manga_status": [
+    {
+      "id": 1,
+      "status": "Ongoing"
+    },
+    {
+      "id": 2,
+      "status": "Completed"
+    }
+  ],
+  "comments": [
+    {
+      "comment_id": 1,
+      "user": "Anh Kiet",
+      "avatar": "https://i.imgur.com/1n7f1bF.jpg",
+      "content": "Truyện này hay thực sự, có ai biết chap sau sẽ ra khi nào không?",
+      "parent_comment_id": null,
+      "root_comment_id": 1,
+      "timestamp": "2026-04-25T00:00:00Z"
+    },
+    {
+        "comment_id": 2,
+        "user": "Khang Le",
+        "avatar": "https://i.imgur.com/2n7f1bF.jpg",
+        "content": "Mình cũng đang hóng chap mới đây, chap trước để lại nhiều tình tiết hấp dẫn quá!",
+        "parent_comment_id": 1,
+        "root_comment_id": 1,
+        "timestamp": "2026-04-25T01:00:00Z"
+    },
+    {
+        "comment_id": 3,
+        "user": "Lam Vu",
+        "avatar": "https://i.imgur.com/3n7f1bF.jpg",
+        "content": "Mình nghĩ chap mới sẽ ra vào cuối tháng này, tác giả thường ra chap mới vào cuối tháng mà.",
+        "parent_comment_id": 1,
+        "root_comment_id": 1,
+        "timestamp": "2026-04-25T02:00:00Z"
+    },
+    {
+        "comment_id": 4,
+        "user": "Huyen Pham",
+        "avatar": "https://i.imgur.com/4n7f1bF.jpg",
+        "content": "Hình như tháng này sẽ ra muộn hơn vì tác giả đang bận làm anime, nhưng mình cũng không chắc lắm đâu.",
+        "parent_comment_id": 3,
+        "root_comment_id": 1,
+        "timestamp": "2026-04-25T03:00:00Z"
+    }
+  ],
+  "notifications": [
+    {
+      "notification_id": 1,
+      "user_id": 1,
+      "title": "One Piece đã có chap mới",
+      "content": "Chap 150 của One Piece đã được phát hành. Hãy đọc ngay để không bỏ lỡ những tình tiết hấp dẫn!",
+      "is_read": false,
+      "created_at": "2026-04-25T10:00:00Z"
+    },
+    {
+      "notification_id": 2,
+      "user_id": 1,
+      "title": "Naruto đã có chap mới",
+      "content": "Chap 700 của Naruto đã được phát hành. Đây là chap cuối cùng của bộ truyện, đừng bỏ lỡ nhé!",
+      "is_read": false,
+      "created_at": "2026-04-25T11:00:00Z"
+    },
+    {
+      "notification_id": 3,
+      "user_id": 1,
+      "title": "MangaWeb thông báo: vá lỗi hệ thống",
+      "content": "Chúng tôi sẽ tiến hành bảo trì hệ thống vào ngày mai từ 1h đến 3h sáng để vá một số lỗi nhỏ. Trong thời gian này, bạn có thể gặp khó khăn khi truy cập trang web. Chúng tôi xin lỗi vì sự bất tiện này và cảm ơn bạn đã thông cảm.",
+      "is_read": false,
+      "created_at": "2026-04-25T12:00:00Z"
     }
   ]
 }
