@@ -1,6 +1,8 @@
-import { getUserNotification } from "../../data/api";
+import { useState } from "react";
+import { clearUserNotifications, getUserNotification, markAllNotificationsRead } from "../../data/api";
+
 const Nofitication = () => {
-    const notifications = getUserNotification(); // Giả lập dữ liệu thông báo
+    const [notifications, setNotifications] = useState(getUserNotification()); // Giả lập dữ liệu thông báo
 
     return (
         <div className="bg-sky-900 text-white flex flex-col px-8 py-8 min-h-screen">
@@ -17,10 +19,10 @@ const Nofitication = () => {
             </div>
             <div className="h-px border-sky-800 w-full my-4 border-b-2"></div>
             <div className="flex flex-row items-end justify-end">
-                <button className="bg-sky-500 hover:bg-sky-400 text-white font-semibold py-2 px-4 rounded transition">
+                <button onClick={() => setNotifications(markAllNotificationsRead())} className="bg-sky-500 hover:bg-sky-400 text-white font-semibold py-2 px-4 rounded transition">
                     Đánh dấu đã đọc tất cả
                 </button>
-                <button className="ml-4 bg-red-600 hover:bg-red-400 text-white font-semibold py-2 px-4 rounded transition">
+                <button onClick={() => setNotifications(clearUserNotifications())} className="ml-4 bg-red-600 hover:bg-red-400 text-white font-semibold py-2 px-4 rounded transition">
                     Xóa thông báo
                 </button>
             </div>
