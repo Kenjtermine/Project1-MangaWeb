@@ -38,7 +38,6 @@ CREATE TABLE users (
   user_gender user_gender DEFAULT 'other',
   user_role user_role NOT NULL DEFAULT 'user',
   is_banned BOOLEAN NOT NULL DEFAULT FALSE,
-  last_login_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_users_name_len CHECK (char_length(trim(user_name)) >= 3),
@@ -62,12 +61,10 @@ CREATE TABLE manga (
   manga_title VARCHAR(255) NOT NULL,
   manga_slug VARCHAR(255) NOT NULL,
   manga_author VARCHAR(255),
-  manga_artist VARCHAR(255),
   manga_summary TEXT,
   manga_cover_image TEXT,
   manga_status manga_status NOT NULL DEFAULT 'ongoing',
   publish_year INT CHECK (publish_year BETWEEN 1900 AND 2100),
-  is_adult BOOLEAN NOT NULL DEFAULT FALSE,
   avg_rating NUMERIC(3,2) NOT NULL DEFAULT 0 CHECK (avg_rating >= 0 AND avg_rating <= 5),
   rating_count INT NOT NULL DEFAULT 0 CHECK (rating_count >= 0),
   total_views BIGINT NOT NULL DEFAULT 0 CHECK (total_views >= 0),
@@ -110,7 +107,7 @@ CREATE INDEX idx_pages_chapter_id ON pages (chapter_id);
 
 CREATE TABLE genres (
   genre_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  genre_name VARCHAR(100) NOT NULL UNIQUE
+  genre_name VARCHAR(100) NOT NULL UNIQUE,
   genre_description TEXT
 );
 
@@ -180,7 +177,7 @@ CREATE TABLE notifications (
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   is_read BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 -- =========================================================
 -- MODULE 4: PERSONALIZATION (FAVORITE / LIBRARY / HISTORY)
@@ -326,4 +323,3 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_ratings_refresh_manga_cache
 AFTER INSERT OR UPDATE OR DELETE ON ratings
 FOR EACH ROW EXECUTE FUNCTION trg_refresh_manga_rating();
-

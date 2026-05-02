@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginSideImage from "../../assets/Login_side_img.jpg";
+import { registerUser } from "../../data/api";
 
 const TRANSITION_MS = 260;
 
 const Register = () => {
   const navigate = useNavigate();
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [form, setForm] = useState({ username: "", email: "", password: "", confirmPassword: "" });
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setIsFormVisible(true));
@@ -25,6 +29,19 @@ const Register = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const result = registerUser(form);
+
+    setIsError(!result.ok);
+    setMessage(result.message);
+
+    if (result.ok) {
+      window.setTimeout(() => navigate("/"), 900);
+    }
+  };
+
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
+    if (message) setMessage("");
   };
 
   return (
@@ -63,26 +80,52 @@ const Register = () => {
             Tham gia MangaWeb để theo dõi bộ truyện yêu thích và nhận cập nhật mới nhất.
           </p>
 
+          {message && (
+            <div className={`w-full p-3 rounded text-sm text-center font-medium ${
+              isError
+                ? "bg-red-100 text-red-600 border border-red-200"
+                : "bg-green-100 text-green-600 border border-green-200"
+            }`}>
+              {message}
+            </div>
+          )}
+
           <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
             <input
               type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
               placeholder="Tên người dùng"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
+              required
             />
             <input
               type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               placeholder="Email"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
+              required
             />
             <input
               type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
               placeholder="Mật khẩu"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
+              required
             />
             <input
               type="password"
+              name="confirmPassword"
+              value={form.confirmPassword}
+              onChange={handleChange}
               placeholder="Nhập lại mật khẩu"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
+              required
             />
 
             <button type="submit" className="bg-sky-600 text-white font-semibold py-3 lg:py-2 rounded shadow-md hover:bg-sky-700 hover:shadow-lg transition duration-300 ease-in-out">

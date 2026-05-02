@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginSideImage from "../../assets/Login_side_img.jpg";
-import mockData from "../../data/mockData.json";
-
-const users = mockData.users; // Dữ liệu giả cho tài khoản người dùng
+import { loginUser } from "../../data/api";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -27,15 +25,11 @@ const Login = () => {
     const handleSubmit = (e) => {
         e.preventDefault(); // Ngăn trình duyệt tự động reload trang
 
-        // Tìm xem có account nào khớp cả username và password không
-        const foundUser = users.find(
-            (acc) => acc.username === form.username && acc.password === form.password
-        );
+        const result = loginUser(form);
 
-        if (foundUser) {
+        if (result.ok) {
             // Đăng nhập đúng
             setIsError(false);
-            localStorage.setItem("currentUserId", foundUser.id); // Lưu ID người dùng vào localStorage
             setMessage("Đăng nhập thành công! Đang chuyển hướng...");
             
             // Giả lập độ trễ của mạng, sau 1.5s sẽ chuyển về trang chủ
@@ -45,7 +39,7 @@ const Login = () => {
         } else {
             // Đăng nhập sai
             setIsError(true);
-            setMessage("Sai tên đăng nhập hoặc mật khẩu!");
+            setMessage(result.message);
         }
     }
     return (
