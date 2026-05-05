@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { isFavoriteManga, toggleFavoriteManga } from "../../data/api";
+import { toast } from "react-hot-toast";
 
 const FavBtn = ({ mangaId = 1, className = "", buttonClassName = "", compact = false }) => {
     const [isClicked, setIsClicked] = useState(isFavoriteManga(mangaId));
@@ -10,6 +11,10 @@ const FavBtn = ({ mangaId = 1, className = "", buttonClassName = "", compact = f
         setIsClicked(result.isFavorite);
         setMessage(result.message);
         window.setTimeout(() => setMessage(""), 1800);
+
+        if (result.ok == false) {
+            toast.error(result.message);
+        }
     };
 
     return (

@@ -35,12 +35,13 @@ function App() {
           <Route path="/my-list" element={<MyFavorites />} />
           <Route path="/my-fav" element={<MyFavorites />} />
           <Route path="/history" element={<MyHistory />} />
+          <Route path="/sandbox" element={<Sandbox />} />
+
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Route sandbox để test component mới, xem hiển thị hay gì đó cứ bỏ vào đây, ta sẽ xóa route này khi xong project */}
-        <Route path="/sandbox" element={<Sandbox />} />
 
         <Route path ="/admin" element={<AdminLayout/>}>
           <Route path="comments" element={<CommentManager />} />

@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   favorites: "mockFavorites",
   history: "mockReadingHistory",
   notifications: "mockNotifications",
+  comments: "mockComments",
 };
 
 const readStorage = (key, fallback) => {
@@ -212,6 +213,27 @@ export const toggleFavoriteManga = (mangaId) => {
   };
 };
 
+export const removeFavoriteManga = (mangaId) => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập." };
+
+  const targetId = Number(mangaId);
+  const favorites = getFavorites();
+  
+  // Chỉ lọc bỏ những record trùng với userId và mangaId hiện tại
+  const nextFavorites = favorites.filter(
+    (favorite) => !(favorite.user_id === userId && favorite.manga_id === targetId)
+  );
+
+  writeStorage(STORAGE_KEYS.favorites, nextFavorites);
+  
+  return {
+    ok: true,
+    isFavorite: false, // Chắc chắn đã bị xóa
+    message: "Đã xóa khỏi danh sách yêu thích.",
+  };
+};
+
 export const getUserReadingHistory = () => {
   const userId = getCurrentUserId();
   if (!userId) return [];
@@ -249,4 +271,120 @@ export const addReadingHistory = ({ mangaId, chapterId, pageNumber = 1, progress
   ];
   writeStorage(STORAGE_KEYS.history, nextHistory);
   return { ok: true, item: nextItem };
+};
+
+//* COMMENT SECTION *//
+
+const normalizeComment = (comment) => {
+  const user = getUsers().find((item) => item.id === Number(comment.user_id));
+
+  return {
+    ...comment,
+    user: user?.username || comment.user || "Người dùng ẩn danh",
+    avatar: user?.avatar || comment.avatar || "https://i.imgur.com/1n7f1bF.jpg",
+    timestamp: comment.created_at || comment.timestamp,
+    like_count: comment.like_count || 0,
+    dislike_count: comment.dislike_count || 0,
+  };
+};
+
+export const getComments = (chapterId = 1) => {
+  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
+
+  return comments
+    .filter((comment) => Number(comment.chapter_id || 1) === Number(chapterId))
+    .map(normalizeComment)
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+};
+
+export const submitComment = ({ chapterId = 1, content, parentCommentId = null, rootCommentId = null }) => {
+  const user = getUserLogin();
+  const text = content?.trim();
+
+  if (!user) {
+    return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
+  }
+
+  if (!text) {
+    return { ok: false, message: "Nội dung bình luận không được để trống." };
+  }
+
+  if (text.length > 1000) {
+    return { ok: false, message: "Bình luận tối đa 1000 ký tự." };
+  }
+
+  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
+  const nextId = Math.max(...comments.map((comment) => Number(comment.comment_id) || 0), 0) + 1;
+  const createdAt = new Date().toISOString();
+  const newComment = {
+    comment_id: nextId,
+    user_id: Number(user.id),
+    chapter_id: Number(chapterId),
+    parent_comment_id: parentCommentId ? Number(parentCommentId) : null,
+    root_comment_id: rootCommentId ? Number(rootCommentId) : parentCommentId ? Number(parentCommentId) : nextId,
+    content: text,
+    like_count: 0,
+    dislike_count: 0,
+    is_deleted: false,
+    created_at: createdAt,
+    updated_at: createdAt,
+  };
+
+  writeStorage(STORAGE_KEYS.comments, [newComment, ...comments]);
+
+  return {
+    ok: true,
+    message: "Đã gửi bình luận.",
+    comment: normalizeComment(newComment),
+    comments: getComments(chapterId),
+  };
+};
+
+export const toggleReaction = ({ commentId, reaction }) => {
+  const currentUserId = getCurrentUserId();
+  if (!currentUserId) return { ok: false, message: "Cần đăng nhập để reaction." };
+
+  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
+  const comment = comments.find((item) => item.comment_id === Number(commentId));
+
+  if (!comment) return { ok: false, message: "Bình luận không tồn tại." };
+
+  // Initialize userReactions nếu chưa có
+  if (!comment.userReactions) {
+    comment.userReactions = {};
+  }
+
+  const userCurrentReaction = comment.userReactions[currentUserId]; // lấy reaction hiện tại
+
+  if (userCurrentReaction === reaction) {
+    // 1. HỦY REACTION HIỆN TẠI (Bấm Like thêm 1 lần nữa để hủy Like)
+    const countKey = reaction === "like" ? "like_count" : "dislike_count";
+    comment[countKey] = Math.max(0, comment[countKey] - 1);
+    delete comment.userReactions[currentUserId];
+  } else {
+        // 2. CHUYỂN REACTION hoặc THÊM REACTION MỚI
+        
+        // Trừ đi reaction cũ (Nếu trước đó đã có reaction)
+        if (userCurrentReaction) {
+            const oldKey = userCurrentReaction === "like" ? "like_count" : "dislike_count";
+            comment[oldKey] = Math.max(0, comment[oldKey] - 1);
+        }
+
+        // Cộng reaction mới vào
+        const newKey = reaction === "like" ? "like_count" : "dislike_count";
+        comment[newKey] += 1;
+        
+        // Cập nhật lại lịch sử reaction của user
+        comment.userReactions[currentUserId] = reaction;
+  }
+
+  writeStorage(STORAGE_KEYS.comments, comments);
+  return { ok: true, message: `Binh luan ${reaction} thanh cong`, comment };
+};
+
+export const deleteComment = (commentId) => {
+  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
+  const nextComments = comments.filter((comment) => comment.comment_id !== Number(commentId));
+  writeStorage(STORAGE_KEYS.comments, nextComments);
+  return { ok: true, message: "Xóa bình luận thành công", comments: nextComments };
 };

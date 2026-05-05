@@ -17,6 +17,8 @@ app.use(
 );
 app.use(express.json());
 
+app.use('/api/comments', commentRoutes);
+
 app.use(notFound);
 app.use(errorHandler);
 
