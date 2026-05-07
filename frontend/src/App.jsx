@@ -19,8 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin/add-comic" element={<AddComic />} />
-        <Route path="/admin/add-comic" element={<AddComic />} />
-        <Route path="/admin/add-chapter" element={<AddChapter />} /> 
+        <Route path="/admin/add-chapter" element={<AddChapter />} />  
       </Routes>
     </Router>
   );
