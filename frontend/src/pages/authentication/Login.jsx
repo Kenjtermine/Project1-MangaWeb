@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginSideImage from "../../assets/Login_side_img.jpg";
+import { loginUser } from "../../data/api";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -9,11 +10,6 @@ const Login = () => {
     const [message, setMessage] = useState("");
     const [isError, setIsError] = useState(false);
     // const [isLoading, setIsLoading] = useState(false);
-    
-    const accounts = [
-        {id: 1, username: "Kenjtermine", password: "123456789"},
-        {id: 2, username: "KhangLe", password: "12345678"},
-    ]
 
     // 2. Hàm cập nhật state khi người dùng gõ phím
     const handleChange = (e) => {
@@ -29,24 +25,21 @@ const Login = () => {
     const handleSubmit = (e) => {
         e.preventDefault(); // Ngăn trình duyệt tự động reload trang
 
-        // Tìm xem có account nào khớp cả username và password không
-        const foundUser = accounts.find(
-            (acc) => acc.username === form.username && acc.password === form.password
-        );
+        const result = loginUser(form);
 
-        if (foundUser) {
+        if (result.ok) {
             // Đăng nhập đúng
             setIsError(false);
             setMessage("Đăng nhập thành công! Đang chuyển hướng...");
             
             // Giả lập độ trễ của mạng, sau 1.5s sẽ chuyển về trang chủ
             setTimeout(() => {
-                navigate("/");
+                window.location.href = "/"; // Chuyển về trang chủ
             }, 1500);
         } else {
             // Đăng nhập sai
             setIsError(true);
-            setMessage("Sai tên đăng nhập hoặc mật khẩu!");
+            setMessage(result.message);
         }
     }
     return (
@@ -79,6 +72,17 @@ const Login = () => {
                         Khám phá kho truyện tranh phong phú, cập nhật liên tục và hoàn toàn miễn phí.
                     </p>
                     
+                    {/* thông báo */}
+                    {message && (
+                        <div className={`w-full p-3 rounded text-sm text-center font-medium transition-all ${
+                            isError 
+                                ? "bg-red-100 text-red-600 border border-red-200" 
+                                : "bg-green-100 text-green-600 border border-green-200"
+                        }`}>
+                            {message}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
                         <input 
                             type="text"

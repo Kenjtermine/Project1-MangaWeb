@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { createNewManga } from '../../data/api';
 const AddComic = () => {
   const [formData, setFormData] = useState({ title: '', author: '', description: '', category: '' });
   const [coverImage, setCoverImage] = useState(null);
@@ -25,7 +25,7 @@ const AddComic = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { 
     e.preventDefault(); 
     
     if (!formData.title || !formData.author) {
@@ -39,11 +39,16 @@ const AddComic = () => {
     
     console.log("=== DỮ LIỆU CHUẨN BỊ GỬI LÊN SERVER ===");
     console.log("Thông tin:", formData);
-    console.log("File ảnh:", coverImage ? coverImage.name : "Không có ảnh");
-
-    setTimeout(() => {
-      setSuccess('Thêm truyện thành công! (Xem chi tiết ở tab Console)');
-    }, 1000);
+    
+    const res = await createNewManga(formData);
+    
+    if (res.ok) {
+      setSuccess('Thêm truyện thành công! Mời bạn quay lại Studio để kiểm tra.');
+      setFormData({ title: '', author: '', description: '', category: '' });
+      setCoverImage(null);
+    } else {
+      setError('Lưu truyện thất bại, vui lòng thử lại.');
+    }
   };
 
   return (

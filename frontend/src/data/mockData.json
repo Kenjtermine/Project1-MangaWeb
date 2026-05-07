@@ -1,154 +1,361 @@
 {
-  "genres": [
+  "users": [
     {
       "id": 1,
-      "name": "Shonen",
-      "description": "Shounen là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nam trẻ tuổi, thường từ 12 đến 18 tuổi."
+      "username": "Anh Kiet",
+      "email": "kiet.bui2k5@hcmut.edu.vn",
+      "password": "123456",
+      "avatar": "https://i.imgur.com/1n7f1bF.jpg",
+      "role": "User",
+      "gender": "Nam",
+      "is_banned": false,
+      "created_at": "2026-04-01T08:00:00Z"
     },
     {
       "id": 2,
-      "name": "Shoujo",
-      "description": "Shoujo là thể loại truyện tranh Nhật Bản chủ yếu hướng đến đối tượng độc giả nữ trẻ tuổi, thường từ 12 đến 18 tuổi."
+      "username": "Khang Le",
+      "email": "le.khang@hcmut.edu.vn",
+      "password": "123456",
+      "avatar": "https://i.imgur.com/2n7f1bF.jpg",
+      "role": "User",
+      "gender": "Nam",
+      "is_banned": false,
+      "created_at": "2026-04-03T08:00:00Z"
     },
     {
       "id": 3,
-      "name": "Romance",
-      "description": "Romance là thể loại truyện tranh Nhật Bản tập trung vào các mối quan hệ tình cảm và tình yêu."
+      "username": "Lam Vu",
+      "email": "vu.lam@hcmut.edu.vn",
+      "password": "123456",
+      "avatar": "https://i.imgur.com/3n7f1bF.jpg",
+      "role": "User",
+      "gender": "Nam",
+      "is_banned": false,
+      "created_at": "2026-04-05T08:00:00Z"
     },
     {
       "id": 4,
-      "name": "Comedy",
-      "description": "Comedy là thể loại truyện tranh Nhật Bản mang tính hài hước, giải trí."
+      "username": "nyancat",
+      "email": "hieu.do08082005@hcmut.edu.vn",
+      "password": "123456",
+      "avatar": "https://i.imgur.com/3n7f1bF.jpg",
+      "role": "User",
+      "gender": "Nam",
+      "is_banned": false,
+      "created_at": "2026-04-08T08:00:00Z"
     },
     {
-      "id": 5,
-      "name": "Tragedy",
-      "description": "Tragedy là thể loại truyện tranh Nhật Bản tập trung vào các tình huống bi thảm và đau lòng."
-    },
-    {
-      "id": 6,
-      "name": "Võ Thuật",
-      "description": "Võ Thuật là thể loại truyện tranh Nhật Bản mô tả các kỹ năng võ thuật và cuộc chiến."
-    },
-    {
-      "id": 7,
-      "name": "Drama",
-      "description": "Drama là thể loại truyện tranh Nhật Bản tập trung vào các tình huống kịch tính và cảm xúc."
-    },
-    {
-      "id": 8,
-      "name": "Harem",
-      "description": "Harem là thể loại truyện tranh Nhật Bản mô tả một nhóm người (thường là nữ) quanh một nhân vật nam."
-    },
-    {
-      "id": 9,
-      "name": "Isekai",
-      "description": "Isekai là thể loại truyện tranh Nhật Bản mô tả nhân vật được chuyển sinh hoặc di chuyển đến một thế giới giả tưởng."
-    },
-    {
-      "id": 10,
-      "name": "Fantasy",
-      "description": "Fantasy là thể loại truyện tranh Nhật Bản tập trung vào yếu tố giả tưởng và thế giới tưởng tượng."
-    },
-    {
-      "id": 11,
-      "name": "Sci-fi",
-      "description": "Sci-fi là thể loại truyện tranh Nhật Bản tập trung vào khoa học và công nghệ."
-    },
-    {
-      "id": 12,
-      "name": "Slice of Life",
-      "description": "Slice of Life là thể loại truyện tranh Nhật Bản mô tả các tình huống đời thường và cuộc sống hàng ngày."
+      "id": 83,
+      "username": "Kenjtermine",
+      "email": "kiet.bui2k5admin@hcmut.edu.vn",
+      "password": "123456",
+      "avatar": "https://i.imgur.com/1n7f1bF.jpg",
+      "role": "Admin",
+      "gender": "Nam",
+      "is_banned": false,
+      "created_at": "2026-04-01T07:00:00Z"
     }
   ],
-  "mangaByGenre": {
-    "1": [
-      {
-        "id": 1,
-        "title": "One Piece",
-        "cover": "https://i.imgur.com/1n7f1bF.jpg"
-      },
-      {
-        "id": 2,
-        "title": "Naruto",
-        "cover": "https://i.imgur.com/2n7f1bF.jpg"
-      },
-      {
-        "id": 3,
-        "title": "Dragon Ball",
-        "cover": "https://i.imgur.com/3n7f1bF.jpg"
-      }
-    ],
-    "2": [
-      {
-        "id": 4,
-        "title": "Ouran Highschool Host Club",
-        "cover": "https://i.imgur.com/4n7f1bF.jpg"
-      },
-      {
-        "id": 5,
-        "title": "Fruits Basket",
-        "cover": "https://i.imgur.com/5n7f1bF.jpg"
-      }
-    ],
-    "3": [
-      {
-        "id": 6,
-        "title": "Kaguya-sama: Love Is War",
-        "cover": "https://i.imgur.com/6n7f1bF.jpg"
-      },
-      {
-        "id": 7,
-        "title": "Horimiya",
-        "cover": "https://i.imgur.com/7n7f1bF.jpg"
-      }
-    ]
-  },
+  "genres": [
+    { "id": 1, "name": "Shonen", "description": "Truyện hành động, phiêu lưu hướng đến độc giả trẻ." },
+    { "id": 2, "name": "Shoujo", "description": "Truyện cảm xúc, tình cảm và trưởng thành." },
+    { "id": 3, "name": "Romance", "description": "Tập trung vào tình yêu và các mối quan hệ." },
+    { "id": 4, "name": "Comedy", "description": "Nội dung hài hước, nhẹ nhàng, dễ đọc." },
+    { "id": 5, "name": "Tragedy", "description": "Câu chuyện nhiều biến cố và cảm xúc nặng." },
+    { "id": 6, "name": "Martial Arts", "description": "Võ thuật, tu luyện và các trận đấu kỹ năng." },
+    { "id": 7, "name": "Drama", "description": "Tập trung vào xung đột, lựa chọn và cảm xúc nhân vật." },
+    { "id": 8, "name": "Harem", "description": "Nhiều nhân vật xoay quanh một tuyến nhân vật chính." },
+    { "id": 9, "name": "Isekai", "description": "Chuyển sinh hoặc du hành sang thế giới khác." },
+    { "id": 10, "name": "Fantasy", "description": "Thế giới giả tưởng, phép thuật và sinh vật đặc biệt." },
+    { "id": 11, "name": "Sci-fi", "description": "Khoa học viễn tưởng, công nghệ và tương lai." },
+    { "id": 12, "name": "Slice of Life", "description": "Đời thường, học đường và nhịp sống nhẹ nhàng." }
+  ],
+  "authors": [
+    { "id": 1, "name": "Eiichiro Oda", "photo": "https://i.imgur.com/1n7f1bF.jpg" },
+    { "id": 2, "name": "Masashi Kishimoto", "photo": "https://i.imgur.com/2n7f1bF.jpg" },
+    { "id": 3, "name": "Hajime Isayama", "photo": "https://i.imgur.com/3n7f1bF.jpg" },
+    { "id": 4, "name": "Koyoharu Gotouge", "photo": "https://i.imgur.com/4n7f1bF.jpg" },
+    { "id": 5, "name": "HERO", "photo": "https://i.imgur.com/5n7f1bF.jpg" },
+    { "id": 6, "name": "Aka Akasaka", "photo": "https://i.imgur.com/6n7f1bF.jpg" }
+  ],
   "allMangas": [
     {
       "id": 1,
+      "manga_id": 1,
       "title": "One Piece",
-      "cover": "https://i.imgur.com/1n7f1bF.jpg"
+      "slug": "one-piece",
+      "author": "Eiichiro Oda",
+      "summary": "Monkey D. Luffy ra khơi tìm kho báu One Piece và trở thành Vua Hải Tặc.",
+      "cover": "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?auto=format&fit=crop&w=600&q=80",
+      "status": "ongoing",
+      "publish_year": 1997,
+      "avg_rating": 4.9,
+      "rating_count": 1920,
+      "total_views": 1250000,
+      "genreIds": [1, 4, 10],
+      "latest_chapter": 1118,
+      "updated_at": "2026-04-30T10:00:00Z"
     },
     {
       "id": 2,
+      "manga_id": 2,
       "title": "Naruto",
-      "cover": "https://i.imgur.com/2n7f1bF.jpg"
+      "slug": "naruto",
+      "author": "Masashi Kishimoto",
+      "summary": "Naruto theo đuổi ước mơ trở thành Hokage và được mọi người công nhận.",
+      "cover": "https://images.unsplash.com/photo-1601850494422-3cf14624b0b3?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 1999,
+      "avg_rating": 4.7,
+      "rating_count": 1700,
+      "total_views": 980000,
+      "genreIds": [1, 7, 10],
+      "latest_chapter": 700,
+      "updated_at": "2026-04-20T10:00:00Z"
     },
     {
       "id": 3,
-      "title": "Dragon Ball",
-      "cover": "https://i.imgur.com/3n7f1bF.jpg"
+      "manga_id": 3,
+      "title": "Attack on Titan",
+      "slug": "attack-on-titan",
+      "author": "Hajime Isayama",
+      "summary": "Nhân loại chiến đấu để sinh tồn sau những bức tường khổng lồ.",
+      "cover": "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 2009,
+      "avg_rating": 4.8,
+      "rating_count": 1340,
+      "total_views": 870000,
+      "genreIds": [1, 5, 7],
+      "latest_chapter": 139,
+      "updated_at": "2026-04-18T10:00:00Z"
     },
     {
       "id": 4,
-      "title": "Ouran Highschool Host Club",
-      "cover": "https://i.imgur.com/4n7f1bF.jpg"
+      "manga_id": 4,
+      "title": "Demon Slayer",
+      "slug": "demon-slayer",
+      "author": "Koyoharu Gotouge",
+      "summary": "Tanjiro trở thành kiếm sĩ diệt quỷ để cứu em gái Nezuko.",
+      "cover": "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 2016,
+      "avg_rating": 4.6,
+      "rating_count": 1180,
+      "total_views": 760000,
+      "genreIds": [1, 5, 10],
+      "latest_chapter": 205,
+      "updated_at": "2026-04-27T10:00:00Z"
     },
     {
       "id": 5,
-      "title": "Fruits Basket",
-      "cover": "https://i.imgur.com/5n7f1bF.jpg"
+      "manga_id": 5,
+      "title": "Horimiya",
+      "slug": "horimiya",
+      "author": "HERO",
+      "summary": "Hai học sinh với hai mặt đối lập dần tìm thấy sự đồng điệu.",
+      "cover": "https://images.unsplash.com/photo-1519682337058-a94d519337bc?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 2011,
+      "avg_rating": 4.5,
+      "rating_count": 820,
+      "total_views": 420000,
+      "genreIds": [2, 3, 12],
+      "latest_chapter": 122,
+      "updated_at": "2026-04-12T10:00:00Z"
     },
     {
       "id": 6,
+      "manga_id": 6,
       "title": "Kaguya-sama: Love Is War",
-      "cover": "https://i.imgur.com/6n7f1bF.jpg"
+      "slug": "kaguya-sama-love-is-war",
+      "author": "Aka Akasaka",
+      "summary": "Hai thiên tài học đường đấu trí để khiến đối phương tỏ tình trước.",
+      "cover": "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 2015,
+      "avg_rating": 4.7,
+      "rating_count": 960,
+      "total_views": 530000,
+      "genreIds": [3, 4, 12],
+      "latest_chapter": 281,
+      "updated_at": "2026-04-22T10:00:00Z"
     },
     {
       "id": 7,
-      "title": "Horimiya",
-      "cover": "https://i.imgur.com/7n7f1bF.jpg"
+      "manga_id": 7,
+      "title": "Solo Leveling",
+      "slug": "solo-leveling",
+      "author": "Chugong",
+      "summary": "Thợ săn yếu nhất nhận được hệ thống bí ẩn và tăng cấp không ngừng.",
+      "cover": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
+      "status": "completed",
+      "publish_year": 2018,
+      "avg_rating": 4.8,
+      "rating_count": 1510,
+      "total_views": 920000,
+      "genreIds": [1, 9, 10],
+      "latest_chapter": 179,
+      "updated_at": "2026-04-28T10:00:00Z"
     },
     {
       "id": 8,
-      "title": "Attack on Titan",
-      "cover": "https://i.imgur.com/8n7f1bF.jpg"
+      "manga_id": 8,
+      "title": "Blue Lock",
+      "slug": "blue-lock",
+      "author": "Muneyuki Kaneshiro",
+      "summary": "Dự án đào tạo tiền đạo ích kỷ nhất Nhật Bản bắt đầu.",
+      "cover": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=600&q=80",
+      "status": "ongoing",
+      "publish_year": 2018,
+      "avg_rating": 4.4,
+      "rating_count": 640,
+      "total_views": 390000,
+      "genreIds": [1, 7],
+      "latest_chapter": 259,
+      "updated_at": "2026-04-29T10:00:00Z"
     },
     {
       "id": 9,
-      "title": "Demon Slayer",
-      "cover": "https://i.imgur.com/9n7f1bF.jpg"
+      "manga_id": 9,
+      "title": "Frieren: Beyond Journey's End",
+      "slug": "frieren-beyond-journeys-end",
+      "author": "Kanehito Yamada",
+      "summary": "Pháp sư Frieren nhìn lại hành trình sau khi nhóm anh hùng đánh bại Ma Vương.",
+      "cover": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?auto=format&fit=crop&w=600&q=80",
+      "status": "ongoing",
+      "publish_year": 2020,
+      "avg_rating": 4.9,
+      "rating_count": 710,
+      "total_views": 360000,
+      "genreIds": [7, 10, 12],
+      "latest_chapter": 128,
+      "updated_at": "2026-04-30T09:00:00Z"
+    },
+    {
+      "id": 10,
+      "manga_id": 10,
+      "title": "Dandadan",
+      "slug": "dandadan",
+      "author": "Yukinobu Tatsu",
+      "summary": "Ma quỷ, người ngoài hành tinh và tuổi trẻ hỗn loạn trong một câu chuyện tốc độ cao.",
+      "cover": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
+      "status": "ongoing",
+      "publish_year": 2021,
+      "avg_rating": 4.6,
+      "rating_count": 590,
+      "total_views": 310000,
+      "genreIds": [1, 4, 11],
+      "latest_chapter": 149,
+      "updated_at": "2026-04-29T08:00:00Z"
+    }
+  ],
+  "chapters": [
+    { "chapter_id": 1, "manga_id": 1, "chapter_number": 1118, "chapter_title": "Tương lai mở ra", "chapter_slug": "chapter-1118", "view_count": 18400, "published_at": "2026-04-30T10:00:00Z" },
+    { "chapter_id": 2, "manga_id": 2, "chapter_number": 700, "chapter_title": "Uzumaki Naruto", "chapter_slug": "chapter-700", "view_count": 13200, "published_at": "2026-04-20T10:00:00Z" },
+    { "chapter_id": 3, "manga_id": 3, "chapter_number": 139, "chapter_title": "Hướng về cái cây", "chapter_slug": "chapter-139", "view_count": 11600, "published_at": "2026-04-18T10:00:00Z" },
+    { "chapter_id": 4, "manga_id": 7, "chapter_number": 179, "chapter_title": "Trận chiến cuối", "chapter_slug": "chapter-179", "view_count": 16200, "published_at": "2026-04-28T10:00:00Z" },
+    { "chapter_id": 5, "manga_id": 9, "chapter_number": 128, "chapter_title": "Ký ức mới", "chapter_slug": "chapter-128", "view_count": 8900, "published_at": "2026-04-30T09:00:00Z" }
+  ],
+  "mangaByGenre": {
+    "1": [1, 2, 3, 4, 7, 8, 10],
+    "2": [5],
+    "3": [5, 6],
+    "4": [1, 6, 10],
+    "5": [3, 4],
+    "6": [],
+    "7": [2, 3, 8, 9],
+    "8": [],
+    "9": [7],
+    "10": [1, 2, 4, 7, 9],
+    "11": [10],
+    "12": [5, 6, 9]
+  },
+  "ratings": [
+    { "user_id": 1, "manga_id": 1, "score": 5, "review_text": "Đọc lâu nhưng vẫn cuốn.", "created_at": "2026-04-20T08:00:00Z" },
+    { "user_id": 1, "manga_id": 7, "score": 5, "review_text": "Cày rất đã.", "created_at": "2026-04-21T08:00:00Z" },
+    { "user_id": 2, "manga_id": 5, "score": 4, "review_text": "Nhẹ nhàng.", "created_at": "2026-04-22T08:00:00Z" }
+  ],
+  "user_favorites": [
+    { "user_id": 1, "manga_id": 1, "created_at": "2026-04-25T10:00:00Z" },
+    { "user_id": 1, "manga_id": 7, "created_at": "2026-04-27T10:00:00Z" },
+    { "user_id": 2, "manga_id": 5, "created_at": "2026-04-22T10:00:00Z" }
+  ],
+  "reading_history": [
+    { "history_id": 1, "user_id": 1, "manga_id": 1, "chapter_id": 1, "page_number": 12, "progress_percent": 46, "last_read_at": "2026-04-30T12:30:00Z" },
+    { "history_id": 2, "user_id": 1, "manga_id": 7, "chapter_id": 4, "page_number": 25, "progress_percent": 88, "last_read_at": "2026-04-29T20:15:00Z" },
+    { "history_id": 3, "user_id": 1, "manga_id": 9, "chapter_id": 5, "page_number": 5, "progress_percent": 20, "last_read_at": "2026-04-28T21:45:00Z" },
+    { "history_id": 4, "user_id": 2, "manga_id": 5, "chapter_id": 5, "page_number": 14, "progress_percent": 61, "last_read_at": "2026-04-25T18:15:00Z" }
+  ],
+  "manga_daily_views": [
+    { "view_date": "2026-04-30", "manga_id": 1, "view_count": 18400 },
+    { "view_date": "2026-04-30", "manga_id": 7, "view_count": 16200 },
+    { "view_date": "2026-04-30", "manga_id": 2, "view_count": 13200 },
+    { "view_date": "2026-04-30", "manga_id": 3, "view_count": 11600 },
+    { "view_date": "2026-04-30", "manga_id": 9, "view_count": 8900 },
+    { "view_date": "2026-04-30", "manga_id": 6, "view_count": 7600 },
+    { "view_date": "2026-04-30", "manga_id": 10, "view_count": 6900 }
+  ],
+  "comments": [
+    {
+      "comment_id": 1,
+      "chapter_id": 1,
+      "user_id": 1,
+      "user": "Anh Kiet",
+      "avatar": "https://i.imgur.com/1n7f1bF.jpg",
+      "content": "Chap này hay thật, đoạn cuối để lại nhiều thứ để bàn.",
+      "parent_comment_id": null,
+      "root_comment_id": 1,
+      "like_count": 12,
+      "dislike_count": 0,
+      "timestamp": "2026-04-25T00:00:00Z"
+    },
+    {
+      "comment_id": 2,
+      "chapter_id": 1,
+      "user_id": 2,
+      "user": "Khang Le",
+      "avatar": "https://i.imgur.com/2n7f1bF.jpg",
+      "content": "Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.",
+      "parent_comment_id": 1,
+      "root_comment_id": 1,
+      "like_count": 6,
+      "dislike_count": 0,
+      "timestamp": "2026-04-25T01:00:00Z"
+    }
+  ],
+  "notifications": [
+    {
+      "notification_id": 1,
+      "user_id": 1,
+      "title": "One Piece đã có chap mới",
+      "content": "Chap 1118 của One Piece đã được cập nhật. Đọc tiếp để không bỏ lỡ diễn biến mới.",
+      "is_read": false,
+      "created_at": "2026-04-30T10:00:00Z"
+    },
+    {
+      "notification_id": 2,
+      "user_id": 1,
+      "title": "Solo Leveling đang lọt top ngày",
+      "content": "Bộ truyện bạn yêu thích đang đứng trong nhóm truyện được đọc nhiều nhất hôm nay.",
+      "is_read": false,
+      "created_at": "2026-04-29T11:00:00Z"
+    },
+    {
+      "notification_id": 3,
+      "user_id": 1,
+      "title": "MangaWeb bảo trì ngắn",
+      "content": "Hệ thống sẽ bảo trì dữ liệu mock trong thời gian ngắn để kiểm thử tính năng mới.",
+      "is_read": true,
+      "created_at": "2026-04-25T12:00:00Z"
+    },
+    {
+      "notification_id": 4,
+      "user_id": 2,
+      "title": "Horimiya có bình luận mới",
+      "content": "Có người vừa phản hồi trong bộ truyện bạn theo dõi.",
+      "is_read": false,
+      "created_at": "2026-04-27T12:00:00Z"
     }
   ]
 }

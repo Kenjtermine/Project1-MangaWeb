@@ -4,13 +4,24 @@ import { Link } from "react-router-dom";
 import GenreList from "../genre-list/GenreList";
 import useClickOutside from "../../hooks/useClickOutside";
 
+import { getUserNotification } from "../../data/api"; 
+import { getUserLogin } from "../../data/api"; 
+
 const Sidebar = () => {
+    const user = getUserLogin();
+    const notificationCount = getUserNotification().filter(noti => noti.is_read === false).length; // Lấy số lượng thông báo chưa đọc
     const [isGenreOpen, setIsGenreOpen] = useState(false);
     // Sử dụng hook: Truyền vào một hàm để đóng popup
     // domNode trả về sẽ được dùng làm mốc (ref)
     const genreRef = useClickOutside(() => {
         setIsGenreOpen(false); // Khi click ra ngoài, set state về false
     });
+
+    const handleLogOut = () => {
+        localStorage.removeItem("currentUserId"); // Xóa thông tin đăng nhập khỏi localStorage
+        window.location.href = "/"; // Chuyển về trang chủ sau khi đăng xuất
+    };
+
     return (
         <div className="h-full bg-sky-800 text-white p-4 flex flex-col gap-6">
             {/* General Section */}
@@ -40,6 +51,14 @@ const Sidebar = () => {
                             {isGenreOpen && <GenreList />}
                         </div>
                     </li>
+                    <li><Link to="/notifications" className="block py-2 px-3 rounded hover:bg-sky-700 transition flex justify-between">
+                        <span>Thông báo</span>
+                        {notificationCount > 0 && (
+                            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full justify-center items-center flex">
+                                {notificationCount > 99 ? '99+' : notificationCount}
+                            </span>
+                        )}
+                    </Link></li>
                     
                 </ul>
             </div>
@@ -47,7 +66,7 @@ const Sidebar = () => {
             <div>
                 <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Thư viện</div>
                 <ul>
-                    <li><Link to="/my-list" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Danh sách yêu thích</Link></li>
+                    <li><Link to="/my-fav" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Danh sách yêu thích</Link></li>
                     <li><Link to="/history" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Lịch sử đọc</Link></li>
                 </ul>
             </div>
@@ -55,9 +74,50 @@ const Sidebar = () => {
             <div>
                 <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Quản lý tài khoản</div>
                 <ul>
-                    <li><Link to="/login" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Đăng nhập</Link></li>
-                    <li><Link to="/register" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Đăng kí</Link></li>
+                    {!user ? (
+                        <>
+                            <li><Link to="/login" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Đăng nhập</Link></li>
+                            <li><Link to="/register" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Đăng kí</Link></li>
+                        </>)
+                         : (
+                            <>
+                                <li><Link to="/logout" className="block py-2 px-3 rounded hover:bg-sky-700 transition" onClick={handleLogOut}>Đăng xuất</Link></li>
+                            </>
+                        )
+                    }
                     <li><Link to="/profile" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Profile của tôi</Link></li>
+                    {/* Chỉ dành cho role admin có Protected Route */}
+                    {user && user.role === "Admin" && (
+                        <li><Link to="/admin" className="block py-2 px-3 rounded hover:bg-sky-700 transition flex gap-2 items-center">Trang quản trị viên <i className="fa fa-wrench"></i></Link></li>
+                    )}
+                </ul>
+            </div>
+            {user && user.is_uploader && (
+                <div>
+                    <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Dành cho tác giả</div>
+                    <ul>
+                        <li>
+                            <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition">
+                                 Creator Studio
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+            )}
+
+            {/* Other Section */}
+            <div>
+                <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Khác</div>
+                <ul>
+                    <li><Link to="/about" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Về MangaWeb</Link></li>
+
+                    {user && !user.is_uploader && user.role !== "Admin" && (
+                        <li>
+                            <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition text-yellow-300">
+                                 Trở thành Uploader
+                            </Link>
+                        </li>
+                    )}
                 </ul>
             </div>
         </div>
