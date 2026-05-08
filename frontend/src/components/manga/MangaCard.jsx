@@ -54,7 +54,7 @@ const MangaCard = ({ manga, className = "" }) => {
 
           <div className="flex items-center gap-2">
             <Link
-              to={`/search?keyword=${encodeURIComponent(manga.title)}`}
+              to={`/manga/${mangaId}`}
               className="flex h-10 flex-1 items-center justify-center rounded bg-sky-600 px-2 text-sm font-semibold text-white transition hover:bg-sky-500"
             >
               Đọc ngay <i className="fa fa-arrow-right ml-2"></i>
@@ -98,7 +98,7 @@ const MangaCard = ({ manga, className = "" }) => {
 
         <div className="mt-auto flex items-center gap-2">
           <Link
-            to={`/search?keyword=${encodeURIComponent(manga.title)}`}
+            to={`/manga/${mangaId}`}
             className="flex h-10 flex-1 items-center justify-center rounded bg-sky-600 px-2 text-sm font-semibold text-white shadow-lg transition hover:bg-sky-500"
           >
             Bắt đầu đọc <i className="fa fa-play ml-2"></i>
