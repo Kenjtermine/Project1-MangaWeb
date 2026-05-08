@@ -14,6 +14,8 @@ import AboutUs from "./pages/aboutus/AboutUs";
 import MyFavorites from "./pages/library/MyFavorite";
 import MyHistory from "./pages/library/MyHistory";
 import Ranking from "./pages/ranking/Ranking";
+import MangaDetail from "./pages/manga/MangaDetail";
+import ChapterReader from "./pages/manga/ChapterReader";
 
 import CreatorDashboard from "./pages/admin/CreatorDashboard"; 
 import AdminLayout from "./layouts/AdminLayout";
@@ -29,6 +31,8 @@ function App() {
           <Route index element={<Homepage />} />
           <Route path="/search" element={<SearchPage mode="search" />} />
           <Route path="/genre/:genreId" element={<SearchPage mode="genre" />} />
+          <Route path="/manga/:mangaId" element={<MangaDetail />} />
+          <Route path="/manga/:mangaId/chapter/:chapterId" element={<ChapterReader />} />
           <Route path="/browse" element={<Browse />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/ranking" element={<Ranking />} />
