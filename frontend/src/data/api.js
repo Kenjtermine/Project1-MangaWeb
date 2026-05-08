@@ -1,7 +1,10 @@
 import mockData from "./mockData.json";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 const STORAGE_KEYS = {
-  users: "mockUsers",
+  authToken: "authToken",
+  currentUser: "currentUser",
   favorites: "mockFavorites",
   history: "mockReadingHistory",
   notifications: "mockNotifications",
@@ -21,75 +24,88 @@ const writeStorage = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+const removeStorage = (key) => {
+  localStorage.removeItem(key);
+};
+
 const normalizeText = (value = "") => value.toString().trim().toLowerCase();
 
-const getUsers = () => readStorage(STORAGE_KEYS.users, mockData.users);
+const request = async (path, options = {}) => {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+};
+
 const getFavorites = () => readStorage(STORAGE_KEYS.favorites, mockData.user_favorites);
 const getHistory = () => readStorage(STORAGE_KEYS.history, mockData.reading_history);
 const getNotifications = () => readStorage(STORAGE_KEYS.notifications, mockData.notifications);
 
+export const getAuthToken = () => localStorage.getItem(STORAGE_KEYS.authToken);
+
+export const getCurrentUser = () => readStorage(STORAGE_KEYS.currentUser, null);
+
 export const getCurrentUserId = () => {
-  const userId = localStorage.getItem("currentUserId");
-  return userId ? Number(userId) : null;
+  const user = getCurrentUser();
+  return user?.user_id ? Number(user.user_id) : null;
 };
 
-export const getUserLogin = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return null;
-  return getUsers().find((user) => user.id === userId) || null;
+export const logoutUser = () => {
+  removeStorage(STORAGE_KEYS.authToken);
+  removeStorage(STORAGE_KEYS.currentUser);
 };
 
-export const loginUser = ({ username, password }) => {
-  const loginName = normalizeText(username);
-  const foundUser = getUsers().find(
-    (user) =>
-      (normalizeText(user.username) === loginName || normalizeText(user.email) === loginName) &&
-      user.password === password
-  );
+const saveAuth = ({ user, token }) => {
+  if (token) localStorage.setItem(STORAGE_KEYS.authToken, token);
+  if (user) writeStorage(STORAGE_KEYS.currentUser, user);
+  return user || null;
+};
 
-  if (!foundUser) {
-    return { ok: false, message: "Sai tên đăng nhập/email hoặc mật khẩu." };
+export const loginUser = async ({ username, email, password }) => {
+  const loginName = username || email;
+
+  try {
+    const data = await request("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username: loginName, email: loginName, password }),
+    });
+
+    const user = saveAuth({ user: data.user, token: data.token });
+    return { ok: true, user, message: "Đăng nhập thành công." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng nhập thất bại." };
+  }
+};
+
+export const registerUser = async ({ username, email, password, confirmPassword }) => {
+  if (password !== confirmPassword) {
+    return { ok: false, message: "Mật khẩu nhập lại không khớp." };
   }
 
-  if (foundUser.is_banned) {
-    return { ok: false, message: "Tài khoản này đang bị khóa." };
+  try {
+    const data = await request("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ username, email, password, confirmPassword }),
+    });
+
+    const user = saveAuth({ user: data.user, token: data.token });
+    return { ok: true, user, message: "Đăng ký thành công." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng ký thất bại." };
   }
-
-  localStorage.setItem("currentUserId", foundUser.id);
-  return { ok: true, user: foundUser, message: "Đăng nhập thành công." };
-};
-
-export const registerUser = ({ username, email, password, confirmPassword }) => {
-  const name = username.trim();
-  const mail = email.trim();
-
-  if (name.length < 3) return { ok: false, message: "Tên người dùng cần ít nhất 3 ký tự." };
-  if (!mail.includes("@")) return { ok: false, message: "Email không hợp lệ." };
-  if (password.length < 6) return { ok: false, message: "Mật khẩu cần ít nhất 6 ký tự." };
-  if (password !== confirmPassword) return { ok: false, message: "Mật khẩu nhập lại không khớp." };
-
-  const users = getUsers();
-  const existed = users.some(
-    (user) => normalizeText(user.username) === normalizeText(name) || normalizeText(user.email) === normalizeText(mail)
-  );
-
-  if (existed) return { ok: false, message: "Tên người dùng hoặc email đã tồn tại." };
-
-  const nextUser = {
-    id: Math.max(...users.map((user) => user.id), 0) + 1,
-    username: name,
-    email: mail,
-    password,
-    avatar: "https://i.imgur.com/1n7f1bF.jpg",
-    role: "User",
-    gender: "Khác",
-    is_banned: false,
-    created_at: new Date().toISOString(),
-  };
-
-  writeStorage(STORAGE_KEYS.users, [...users, nextUser]);
-  localStorage.setItem("currentUserId", nextUser.id);
-  return { ok: true, user: nextUser, message: "Đăng ký thành công." };
 };
 
 export const getAllMangas = () => mockData.allMangas;
@@ -139,10 +155,7 @@ export const getRankingMangas = (limit = 10) => {
   }, {});
 
   return mockData.allMangas
-    .map((manga) => ({
-      ...manga,
-      daily_views: dailyViewByManga[manga.id] || 0,
-    }))
+    .map((manga) => ({ ...manga, daily_views: dailyViewByManga[manga.id] || 0 }))
     .sort((a, b) => b.daily_views - a.daily_views || b.total_views - a.total_views)
     .slice(0, limit);
 };
@@ -150,6 +163,7 @@ export const getRankingMangas = (limit = 10) => {
 export const getUserNotification = () => {
   const userId = getCurrentUserId();
   if (!userId) return [];
+
   return getNotifications()
     .filter((noti) => noti.user_id === userId)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -181,10 +195,7 @@ export const getUserFavorites = () => {
 
   return getFavorites()
     .filter((favorite) => favorite.user_id === userId)
-    .map((favorite) => ({
-      ...favorite,
-      manga: getMangaById(favorite.manga_id),
-    }))
+    .map((favorite) => ({ ...favorite, manga: getMangaById(favorite.manga_id) }))
     .filter((favorite) => favorite.manga);
 };
 
@@ -218,20 +229,12 @@ export const removeFavoriteManga = (mangaId) => {
   if (!userId) return { ok: false, message: "Bạn cần đăng nhập." };
 
   const targetId = Number(mangaId);
-  const favorites = getFavorites();
-  
-  // Chỉ lọc bỏ những record trùng với userId và mangaId hiện tại
-  const nextFavorites = favorites.filter(
+  const nextFavorites = getFavorites().filter(
     (favorite) => !(favorite.user_id === userId && favorite.manga_id === targetId)
   );
-
   writeStorage(STORAGE_KEYS.favorites, nextFavorites);
-  
-  return {
-    ok: true,
-    isFavorite: false, // Chắc chắn đã bị xóa
-    message: "Đã xóa khỏi danh sách yêu thích.",
-  };
+
+  return { ok: true, isFavorite: false, message: "Đã xóa khỏi danh sách yêu thích." };
 };
 
 export const getUserReadingHistory = () => {
@@ -273,18 +276,15 @@ export const addReadingHistory = ({ mangaId, chapterId, pageNumber = 1, progress
   return { ok: true, item: nextItem };
 };
 
-//* COMMENT SECTION *//
-
 const normalizeComment = (comment) => {
-  const user = getUsers().find((item) => item.id === Number(comment.user_id));
-
   return {
     ...comment,
-    user: user?.username || comment.user || "Người dùng ẩn danh",
-    avatar: user?.avatar || comment.avatar || "https://i.imgur.com/1n7f1bF.jpg",
+    user: comment.user || comment.user_name || "Người dùng ẩn danh",
+    avatar: comment.avatar || comment.user_avatar || "https://i.imgur.com/1n7f1bF.jpg",
     timestamp: comment.created_at || comment.timestamp,
     like_count: comment.like_count || 0,
     dislike_count: comment.dislike_count || 0,
+    userReactions: comment.userReactions || {},
   };
 };
 
@@ -298,33 +298,28 @@ export const getComments = (chapterId = 1) => {
 };
 
 export const submitComment = ({ chapterId = 1, content, parentCommentId = null, rootCommentId = null }) => {
-  const user = getUserLogin();
+  const user = getCurrentUser();
   const text = content?.trim();
 
-  if (!user) {
-    return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
-  }
-
-  if (!text) {
-    return { ok: false, message: "Nội dung bình luận không được để trống." };
-  }
-
-  if (text.length > 1000) {
-    return { ok: false, message: "Bình luận tối đa 1000 ký tự." };
-  }
+  if (!user) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
+  if (!text) return { ok: false, message: "Nội dung bình luận không được để trống." };
+  if (text.length > 1000) return { ok: false, message: "Bình luận tối đa 1000 ký tự." };
 
   const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
   const nextId = Math.max(...comments.map((comment) => Number(comment.comment_id) || 0), 0) + 1;
   const createdAt = new Date().toISOString();
   const newComment = {
     comment_id: nextId,
-    user_id: Number(user.id),
+    user_id: Number(user.user_id),
+    user_name: user.user_name,
+    user_avatar: user.user_avatar,
     chapter_id: Number(chapterId),
     parent_comment_id: parentCommentId ? Number(parentCommentId) : null,
     root_comment_id: rootCommentId ? Number(rootCommentId) : parentCommentId ? Number(parentCommentId) : nextId,
     content: text,
     like_count: 0,
     dislike_count: 0,
+    userReactions: {},
     is_deleted: false,
     created_at: createdAt,
     updated_at: createdAt,
@@ -345,46 +340,52 @@ export const toggleReaction = ({ commentId, reaction }) => {
   if (!currentUserId) return { ok: false, message: "Cần đăng nhập để reaction." };
 
   const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
-  const comment = comments.find((item) => item.comment_id === Number(commentId));
+  const nextComments = comments.map((item) => ({ ...item, userReactions: { ...(item.userReactions || {}) } }));
+  const comment = nextComments.find((item) => item.comment_id === Number(commentId));
 
   if (!comment) return { ok: false, message: "Bình luận không tồn tại." };
 
-  // Initialize userReactions nếu chưa có
-  if (!comment.userReactions) {
-    comment.userReactions = {};
-  }
-
-  const userCurrentReaction = comment.userReactions[currentUserId]; // lấy reaction hiện tại
+  const userCurrentReaction = comment.userReactions[currentUserId];
 
   if (userCurrentReaction === reaction) {
-    // 1. HỦY REACTION HIỆN TẠI (Bấm Like thêm 1 lần nữa để hủy Like)
     const countKey = reaction === "like" ? "like_count" : "dislike_count";
-    comment[countKey] = Math.max(0, comment[countKey] - 1);
+    comment[countKey] = Math.max(0, (comment[countKey] || 0) - 1);
     delete comment.userReactions[currentUserId];
   } else {
-        // 2. CHUYỂN REACTION hoặc THÊM REACTION MỚI
-        
-        // Trừ đi reaction cũ (Nếu trước đó đã có reaction)
-        if (userCurrentReaction) {
-            const oldKey = userCurrentReaction === "like" ? "like_count" : "dislike_count";
-            comment[oldKey] = Math.max(0, comment[oldKey] - 1);
-        }
+    if (userCurrentReaction) {
+      const oldKey = userCurrentReaction === "like" ? "like_count" : "dislike_count";
+      comment[oldKey] = Math.max(0, (comment[oldKey] || 0) - 1);
+    }
 
-        // Cộng reaction mới vào
-        const newKey = reaction === "like" ? "like_count" : "dislike_count";
-        comment[newKey] += 1;
-        
-        // Cập nhật lại lịch sử reaction của user
-        comment.userReactions[currentUserId] = reaction;
+    const newKey = reaction === "like" ? "like_count" : "dislike_count";
+    comment[newKey] = (comment[newKey] || 0) + 1;
+    comment.userReactions[currentUserId] = reaction;
   }
 
-  writeStorage(STORAGE_KEYS.comments, comments);
-  return { ok: true, message: `Binh luan ${reaction} thanh cong`, comment };
+  writeStorage(STORAGE_KEYS.comments, nextComments);
+  return { ok: true, message: "Reaction thành công.", comment: normalizeComment(comment) };
 };
 
 export const deleteComment = (commentId) => {
+  const currentUserId = getCurrentUserId();
+  if (!currentUserId) return { ok: false, message: "Bạn cần đăng nhập." };
+
   const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
-  const nextComments = comments.filter((comment) => comment.comment_id !== Number(commentId));
+  const targetId = Number(commentId);
+  const idsToDelete = new Set([targetId]);
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    comments.forEach((comment) => {
+      if (idsToDelete.has(Number(comment.parent_comment_id)) && !idsToDelete.has(comment.comment_id)) {
+        idsToDelete.add(comment.comment_id);
+        changed = true;
+      }
+    });
+  }
+
+  const nextComments = comments.filter((comment) => !idsToDelete.has(comment.comment_id));
   writeStorage(STORAGE_KEYS.comments, nextComments);
-  return { ok: true, message: "Xóa bình luận thành công", comments: nextComments };
+  return { ok: true, message: "Xóa bình luận thành công.", comments: nextComments };
 };

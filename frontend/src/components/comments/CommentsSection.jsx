@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from "react";
 import Comment from "./Comment";
 import CommentForm from "./CommentForm";
-import { getComments, getUserLogin, submitComment, deleteComment } from "../../data/api";
+import { getComments, getCurrentUser, submitComment, deleteComment } from "../../data/api";
 
 const CommentsSection = ({ chapterId = 1 }) => {
     const [flatComments, setFlatComments] = useState(() => getComments(chapterId));
     const [message, setMessage] = useState("");
-    const user = getUserLogin();
+    const user = getCurrentUser();
 
     const buildTree = (comments) => {
         const map = new Map();

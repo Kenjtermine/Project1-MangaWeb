@@ -22,8 +22,13 @@ function buildPoolConfig() {
 const pool = new Pool(buildPoolConfig());
 
 async function connectDB() {
+  try{
   await pool.query('SELECT 1');
-  console.log('PostgreSQL connected');
+      console.log('✅ PostgreSQL connected to Neon Cloud!');
+    } catch (error) {
+      console.error('❌ LỖI KẾT NỐI DATABASE:', error);
+      // Nếu thích, bạn có thể thêm process.exit(1) để ép dừng server nếu DB lỗi
+    }
 }
 
 function query(text, params) {

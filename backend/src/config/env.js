@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 
 dotenv.config();
-
+console.log("👉 CHECK DATABASE URL TỪ ENV:", process.env.DATABASE_URL);
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 5000,

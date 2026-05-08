@@ -22,10 +22,10 @@ const Login = () => {
     };
 
     // 3. Hàm xử lý logic khi bấm nút Đăng nhập
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); // Ngăn trình duyệt tự động reload trang
 
-        const result = loginUser(form);
+        const result = await loginUser(form);
 
         if (result.ok) {
             // Đăng nhập đúng

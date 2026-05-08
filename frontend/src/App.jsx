@@ -16,6 +16,7 @@ import Ranking from "./pages/ranking/Ranking";
 
 import AdminLayout from "./layouts/AdminLayout";
 import CommentManager from "./pages/admin/CommentManager";
+import UserManager from "./pages/admin/UserManager"
 
 import Sandbox from "./pages/Sandbox"; // Import trang sandbox để test component mới
 
@@ -46,6 +47,7 @@ function App() {
         <Route path ="/admin" element={<AdminLayout/>}>
           <Route path="comments" element={<CommentManager />} />
           {/* Các route quản trị khác sẽ được thêm vào đây */}
+          <Route path="users" element={<UserManager/>}/>
          
         </Route>
       </Routes>

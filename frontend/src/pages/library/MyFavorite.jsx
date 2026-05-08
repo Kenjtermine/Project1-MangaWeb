@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import {useEffect, useState} from "react";
-import { getUserFavorites, getUserLogin, removeFavoriteManga, getMangaById } from "../../data/api";
+import { getCurrentUser, getUserFavorites, removeFavoriteManga, getMangaById } from "../../data/api";
 import toast from "react-hot-toast";
 const MyFavorites = () => {
-    const user = getUserLogin();
+    const user = getCurrentUser();
 
     const [favList, setFavList] = useState([]);
 

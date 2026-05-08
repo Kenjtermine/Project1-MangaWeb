@@ -12,7 +12,7 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
     const [replyMessage, setReplyMessage] = useState("");
     const [isRemove, setIsRemove] = useState(false);
 
-    const isPoster = currentUser && Number(currentUser.id) === Number(commentData.user_id);
+    const isPoster = currentUser && Number(currentUser.user_id) === Number(commentData.user_id);
 
     const handleReaction = (type) => {
         const result = toggleReaction({ commentId: commentData.comment_id, reaction: type });

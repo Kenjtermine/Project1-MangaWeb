@@ -5,18 +5,21 @@
 -- =========================================================
 -- USERS DATA
 -- =========================================================
--- Note: Passwords should be hashed in production
+-- Note: Passwords are hashed with bcrypt (cost=10)
+-- All users have password: 123456
 INSERT INTO users (user_id, user_name, user_email, user_password, user_avatar, user_gender, user_role, is_banned, created_at, updated_at)
+OVERRIDING SYSTEM VALUE
 VALUES
-  (1, 'Anh Kiet', 'kiet.bui2k5@hcmut.edu.vn', '123456', 'https://i.imgur.com/1n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-01T08:00:00Z', '2026-04-01T08:00:00Z'),
-  (2, 'Khang Le', 'le.khang@hcmut.edu.vn', '123456', 'https://i.imgur.com/2n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-03T08:00:00Z', '2026-04-03T08:00:00Z'),
-  (3, 'Lam Vu', 'vu.lam@hcmut.edu.vn', '123456', 'https://i.imgur.com/3n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-05T08:00:00Z', '2026-04-05T08:00:00Z'),
-  (83, 'Kenjtermine', 'kiet.bui2k5admin@hcmut.edu.vn', '123456', 'https://i.imgur.com/1n7f1bF.jpg', 'male', 'admin', FALSE, '2026-04-01T07:00:00Z', '2026-04-01T07:00:00Z');
+  (1, 'Anh Kiet', 'kiet.bui2k5@hcmut.edu.vn', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/LLu', 'https://i.imgur.com/1n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-01T08:00:00Z', '2026-04-01T08:00:00Z'),
+  (2, 'Khang Le', 'le.khang@hcmut.edu.vn', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/LLu', 'https://i.imgur.com/2n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-03T08:00:00Z', '2026-04-03T08:00:00Z'),
+  (3, 'Lam Vu', 'vu.lam@hcmut.edu.vn', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/LLu', 'https://i.imgur.com/3n7f1bF.jpg', 'male', 'user', FALSE, '2026-04-05T08:00:00Z', '2026-04-05T08:00:00Z'),
+  (83, 'Kenjtermine', 'kiet.bui2k5admin@hcmut.edu.vn', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/LLu', 'https://i.imgur.com/1n7f1bF.jpg', 'male', 'admin', FALSE, '2026-04-01T07:00:00Z', '2026-04-01T07:00:00Z');
 
 -- =========================================================
 -- GENRES DATA
 -- =========================================================
 INSERT INTO genres (genre_id, genre_name, genre_description)
+OVERRIDING SYSTEM VALUE
 VALUES
   (1, 'Shonen', 'Truyện hành động, phiêu lưu hướng đến độc giả trẻ.'),
   (2, 'Shoujo', 'Truyện cảm xúc, tình cảm và trưởng thành.'),
@@ -35,6 +38,7 @@ VALUES
 -- MANGA DATA
 -- =========================================================
 INSERT INTO manga (manga_id, manga_title, manga_slug, manga_author, manga_summary, manga_cover_image, manga_status, publish_year, avg_rating, rating_count, total_views, created_at, updated_at)
+OVERRIDING SYSTEM VALUE
 VALUES
   (1, 'One Piece', 'one-piece', 'Eiichiro Oda', 'Hành trình cậu bé Monkey D. Luffy ra khơi tìm kho báu One Piece và trở thành Vua Hải Tặc.', 'https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781421541969/one-piece-vol-62-9781421541969_hr.jpg', 'ongoing', 1997, 4.9, 1920, 1250000, '2026-04-01T00:00:00Z', '2026-04-30T10:00:00Z'),
   (2, 'Naruto', 'naruto', 'Masashi Kishimoto', 'Cậu bé Naruto theo đuổi ước mơ trở thành Hokage và được mọi người công nhận.', 'https://i.pinimg.com/736x/25/17/10/251710a727922d9d91bab9e4105b188f.jpg', 'completed', 1999, 4.7, 1700, 980000, '2026-04-01T00:00:00Z', '2026-04-20T10:00:00Z'),
@@ -77,6 +81,7 @@ VALUES
 -- CHAPTERS DATA
 -- =========================================================
 INSERT INTO chapters (chapter_id, manga_id, chapter_number, chapter_title, chapter_slug, view_count, published_at, created_at, updated_at)
+OVERRIDING SYSTEM VALUE
 VALUES
   (1, 1, 1118, 'Tương lai mở ra', 'chapter-1118', 18400, '2026-04-30T10:00:00Z', '2026-04-30T10:00:00Z', '2026-04-30T10:00:00Z'),
   (2, 2, 700, 'Uzumaki Naruto', 'chapter-700', 13200, '2026-04-20T10:00:00Z', '2026-04-20T10:00:00Z', '2026-04-20T10:00:00Z'),
@@ -106,6 +111,7 @@ VALUES
 -- READING HISTORY DATA
 -- =========================================================
 INSERT INTO reading_history (history_id, user_id, manga_id, chapter_id, page_number, progress_percent, last_read_at, created_at)
+OVERRIDING SYSTEM VALUE
 VALUES
   (1, 1, 1, 1, 12, 46, '2026-04-30T12:30:00Z', '2026-04-30T12:30:00Z'),
   (2, 1, 7, 4, 25, 88, '2026-04-29T20:15:00Z', '2026-04-29T20:15:00Z'),
@@ -115,15 +121,16 @@ VALUES
 -- =========================================================
 -- COMMENTS DATA
 -- =========================================================
-INSERT INTO comments (comment_id, chapter_id, user_id, parent_comment_id, root_comment_id, content, like_count, dislike_count, is_deleted, created_at, updated_at)
+INSERT INTO comments (chapter_id, user_id, parent_comment_id, root_comment_id, content, like_count, dislike_count, is_deleted, created_at, updated_at)
 VALUES
-  (1, 1, 1, NULL, 1, 'Chap này hay thật, đoạn cuối để lại nhiều thứ để bàn.', 12, 0, FALSE, '2026-04-25T00:00:00Z', '2026-04-25T00:00:00Z'),
-  (2, 1, 2, 1, 1, 'Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.', 6, 0, FALSE, '2026-04-25T01:00:00Z', '2026-04-25T01:00:00Z');
+  (1, 1, NULL, 1, 'Chap này hay thật, đoạn cuối để lại nhiều thứ để bàn.', 12, 0, FALSE, '2026-04-25T00:00:00Z', '2026-04-25T00:00:00Z'),
+  (1, 2, 1, 1, 'Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.', 6, 0, FALSE, '2026-04-25T01:00:00Z', '2026-04-25T01:00:00Z');
 
 -- =========================================================
 -- NOTIFICATIONS DATA
 -- =========================================================
 INSERT INTO notifications (notification_id, user_id, title, content, is_read, created_at)
+OVERRIDING SYSTEM VALUE
 VALUES
   (1, 1, 'One Piece đã có chap mới', 'Chap 1118 của One Piece đã được cập nhật. Đọc tiếp để không bỏ lỡ diễn biến mới.', FALSE, '2026-04-30T10:00:00Z'),
   (2, 1, 'Solo Leveling đang lọt top ngày', 'Bộ truyện bạn yêu thích đang đứng trong nhóm truyện được đọc nhiều nhất hôm nay.', FALSE, '2026-04-29T11:00:00Z'),

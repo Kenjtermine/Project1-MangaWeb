@@ -27,9 +27,9 @@ const Register = () => {
     window.setTimeout(() => navigate("/login"), TRANSITION_MS);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = registerUser(form);
+    const result = await registerUser(form);
 
     setIsError(!result.ok);
     setMessage(result.message);

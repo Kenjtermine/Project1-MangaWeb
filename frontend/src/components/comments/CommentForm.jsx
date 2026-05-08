@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { getUserLogin } from "../../data/api";
+import { getCurrentUser } from "../../data/api";
 
 // Nhận prop placeholder để đổi chữ: "Viết bình luận..." hoặc "Viết phản hồi..."
 const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment, disabled = false }) => {
     const [comment, setComment] = useState("");
-    const user = getUserLogin();
+    const user = getCurrentUser();
 
 
     const handleSubmit = (e) => {
@@ -27,7 +27,7 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment, 
         <div className="flex gap-3 items-start w-full max-w-3xl mt-4">
             {/* Ảnh Avatar của người đang đăng nhập */}
             <img 
-                src={user?.avatar || "https://i.imgur.com/1n7f1bF.jpg"}
+                src={user?.user_avatar || "https://i.imgur.com/1n7f1bF.jpg"}
                 alt="My Avatar" 
                 className="w-10 h-10 rounded-full object-cover shadow-sm"
             />

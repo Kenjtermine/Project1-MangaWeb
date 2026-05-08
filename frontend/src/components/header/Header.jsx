@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getUserLogin } from "../../data/api"; // Import hàm lấy thông tin người dùng hiện tại
+import { getCurrentUser, logoutUser } from "../../data/api";
 
 const Header = () => {
     const [placeholder, setPlaceholder] = useState("Tìm kiếm");
     const [searchValue, setSearchValue] = useState("");
     const navigate = useNavigate();
 
-    const user = getUserLogin(); // Lấy thông tin người dùng hiện tại
+    const user = getCurrentUser();
 
     const defaultPlaceholder = "Tìm kiếm";
     const activePlaceholder = "Hôm nay bạn muốn tìm gì nhỉ?";
@@ -22,12 +22,12 @@ const Header = () => {
         }
     };
 
-    const handleSearchChange = (e) => {
-        setSearchValue(e.target.value);
+    const handleSearchChange = (event) => {
+        setSearchValue(event.target.value);
     };
 
-    const handleSearchSubmit = (e) => {
-        if (e.key === "Enter" || e.type === "click") {
+    const handleSearchSubmit = (event) => {
+        if (event.key === "Enter" || event.type === "click") {
             if (searchValue.trim()) {
                 navigate(`/search?keyword=${encodeURIComponent(searchValue)}`);
                 setSearchValue("");
@@ -37,22 +37,21 @@ const Header = () => {
     };
 
     const handleLogOut = () => {
-        localStorage.removeItem("currentUserId"); // Xóa thông tin đăng nhập khỏi localStorage
-        window.location.href = "/"; // Chuyển về trang chủ sau khi đăng xuất
+        logoutUser();
+        window.location.href = "/";
     };
 
-	return (
-		<header className="bg-white-600 h-24 py-4 shadow">
-			<div className="container mx-auto px-4 flex items-center justify-between">
-                {/* Logo */}
+    return (
+        <header className="bg-white-600 h-24 py-4 shadow">
+            <div className="container mx-auto px-4 flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                    <div className="text-4xl font-bold text-sky-600">MangaWeb</div>
-                    <img src="https://i.imgur.com/1n7f1bF.jpg" alt="MangaWeb Logo" className="h-16 w-16 rounded-full" />
-                </div>
+                    <div className="flex items-center gap-2">
+                        <div className="text-4xl font-bold text-sky-600">MangaWeb</div>
+                        <img src="https://i.imgur.com/1n7f1bF.jpg" alt="MangaWeb Logo" className="h-16 w-16 rounded-full" />
+                    </div>
                 </Link>
-                {/* Search bar */}
-                <div className="flex items-center w-1/2" >
+
+                <div className="flex items-center w-1/2">
                     <input
                         type="text"
                         placeholder={placeholder}
@@ -60,27 +59,27 @@ const Header = () => {
                         onChange={handleSearchChange}
                         onClick={handleSearchClick}
                         onBlur={handleSearchBlur}
-                        onKeyPress={handleSearchSubmit}
+                        onKeyDown={handleSearchSubmit}
                         className="w-2/3 px-8 py-2 rounded-full text-lg border border-gray-300"
                     />
-                    <button 
+                    <button
                         onClick={handleSearchSubmit}
                         className="ml-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-full transition"
                     >
                         🔍
                     </button>
-                    {/* Login and Sign up buttons */}
+
                     <div className="ml-20 flex items-center">
                         {user ? (
                             <>
                                 <Link to="/profile">
                                     <div className="flex flex-row items-center gap-2 pr-8">
-                                        <img 
-                                            src={user?.avatar || "https://i.imgur.com/1n7f1bF.jpg"} 
-                                            alt="Profile" 
+                                        <img
+                                            src={user.user_avatar || "https://i.imgur.com/1n7f1bF.jpg"}
+                                            alt="Profile"
                                             className="h-10 w-10 rounded-full"
                                         />
-                                        <span className="font-semibold whitespace-nowrap">{user?.username || "User"}</span>
+                                        <span className="font-semibold whitespace-nowrap">{user.user_name || "User"}</span>
                                     </div>
                                 </Link>
                                 <button onClick={handleLogOut} className="bg-red-600 hover:bg-red-700 text-white font-semibold w-28 h-10 transition text-base ml-2">
@@ -99,9 +98,9 @@ const Header = () => {
                         )}
                     </div>
                 </div>
-			</div>
-		</header>
-	);
-}
+            </div>
+        </header>
+    );
+};
 
 export default Header;
