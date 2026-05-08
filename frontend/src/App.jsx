@@ -5,6 +5,8 @@ import Login from "./pages/authentication/Login";
 import Register from "./pages/authentication/Register";
 import MainLayout from "./layouts/MainLayOut";
 import SearchPage from "./pages/searchtable/SearchPage";
+import AddComic from './pages/admin/AddComic';
+import AddChapter from "./pages/admin/AddChapter";
 import Nofitication from "./pages/nofitication/Nofitication";
 import Profile from "./pages/profile/Profile";
 import Browse from "./pages/browse/Browse";
@@ -13,7 +15,7 @@ import MyFavorites from "./pages/library/MyFavorite";
 import MyHistory from "./pages/library/MyHistory";
 import Ranking from "./pages/ranking/Ranking";
 
-
+import CreatorDashboard from "./pages/admin/CreatorDashboard"; 
 import AdminLayout from "./layouts/AdminLayout";
 import CommentManager from "./pages/admin/CommentManager";
 
@@ -35,9 +37,13 @@ function App() {
           <Route path="/my-list" element={<MyFavorites />} />
           <Route path="/my-fav" element={<MyFavorites />} />
           <Route path="/history" element={<MyHistory />} />
+          <Route path="/studio" element={<CreatorDashboard />} />
+          <Route path="/studio/add-comic" element={<AddComic />} />
+          <Route path="/studio/add-chapter" element={<AddChapter />} /> 
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
 
         {/* Route sandbox để test component mới, xem hiển thị hay gì đó cứ bỏ vào đây, ta sẽ xóa route này khi xong project */}
         <Route path="/sandbox" element={<Sandbox />} />
@@ -45,7 +51,7 @@ function App() {
         <Route path ="/admin" element={<AdminLayout/>}>
           <Route path="comments" element={<CommentManager />} />
           {/* Các route quản trị khác sẽ được thêm vào đây */}
-         
+        
         </Route>
       </Routes>
     </Router>

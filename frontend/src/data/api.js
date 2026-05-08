@@ -1,5 +1,4 @@
 import mockData from "./mockData.json";
-
 const STORAGE_KEYS = {
   users: "mockUsers",
   favorites: "mockFavorites",
@@ -249,4 +248,47 @@ export const addReadingHistory = ({ mangaId, chapterId, pageNumber = 1, progress
   ];
   writeStorage(STORAGE_KEYS.history, nextHistory);
   return { ok: true, item: nextItem };
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+export const createNewManga = async (mangaData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUserId')); 
+      const uploaderName = currentUser ? currentUser.username : "nyancat";
+      const existingMangas = JSON.parse(localStorage.getItem('mangas')) || [];
+
+      const newComic = {
+        id: Date.now(), 
+        ...mangaData,
+        uploader_username: uploaderName, 
+        coverImage: mangaData.coverImage || "https://i.imgur.com/3n7f1bF.jpg", 
+        status: "Đang tiến hành"
+      };
+      existingMangas.push(newComic);
+      localStorage.setItem('mangas', JSON.stringify(existingMangas));
+
+      console.log(" Đã lưu truyện vào LocalStorage:", newComic);
+      resolve({ 
+        ok: true, 
+        message: "Thêm truyện thành công!", 
+        manga: newComic 
+      });
+    }, 1500);
+  });
+};
+// frontend/src/data/api.js
+
+export const becomeUploader = () => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
+
+  const users = getUsers();
+  const nextUsers = users.map((user) =>
+    user.id === userId ? { ...user, is_uploader: true } : user
+  );
+
+  writeStorage(STORAGE_KEYS.users, nextUsers);
+  return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
 };
