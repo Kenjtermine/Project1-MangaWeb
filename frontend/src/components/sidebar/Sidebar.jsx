@@ -50,10 +50,8 @@ const Sidebar = () => {
                             {isGenreOpen && <GenreList />}
                         </div>
                     </li>
-                    {/* MỞ RỘNG NẾU CẦN: <li><Link to="/authors" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Tác giả</Link></li> */}
                     <li><Link to="/notifications" className="block py-2 px-3 rounded hover:bg-sky-700 transition flex justify-between">
                         <span>Thông báo</span>
-                        {/* Badge số lượng thông báo mới */}
                         {notificationCount > 0 && (
                             <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full justify-center items-center flex">
                                 {notificationCount > 99 ? '99+' : notificationCount}
@@ -93,10 +91,32 @@ const Sidebar = () => {
                     )}
                 </ul>
             </div>
+            {user && user.is_uploader && (
+                <div>
+                    <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Dành cho tác giả</div>
+                    <ul>
+                        <li>
+                            <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition">
+                                 Creator Studio
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+            )}
+
+            {/* Other Section */}
             <div>
                 <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Khác</div>
                 <ul>
                     <li><Link to="/about" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Về MangaWeb</Link></li>
+
+                    {user && !user.is_uploader && user.role !== "Admin" && (
+                        <li>
+                            <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition text-yellow-300">
+                                 Trở thành Uploader
+                            </Link>
+                        </li>
+                    )}
                 </ul>
             </div>
         </div>

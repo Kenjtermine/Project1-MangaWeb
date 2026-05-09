@@ -113,6 +113,58 @@ export const getAllMangas = () => mockData.allMangas;
 export const getMangaById = (mangaId) =>
   mockData.allMangas.find((manga) => manga.id === Number(mangaId) || manga.manga_id === Number(mangaId));
 
+const createMockChapters = (manga) => {
+  if (!manga) return [];
+
+  const latestChapter = Number(manga.latest_chapter) || 1;
+  const chapterCount = Math.min(latestChapter, 12);
+
+  return Array.from({ length: chapterCount }, (_, index) => {
+    const chapterNumber = latestChapter - index;
+    return {
+      chapter_id: Number(`${manga.id}${String(chapterNumber).replace(".", "")}`),
+      manga_id: manga.id,
+      chapter_number: chapterNumber,
+      chapter_title: index === 0 ? "Chương mới nhất" : `Diễn biến ${chapterNumber}`,
+      chapter_slug: `chapter-${chapterNumber}`,
+      view_count: Math.max(800, (manga.total_views || 10000) / (index + 35)),
+      published_at: new Date(new Date(manga.updated_at).getTime() - index * 86400000).toISOString(),
+      is_mock: true,
+    };
+  });
+};
+
+export const getChaptersByMangaId = (mangaId) => {
+  const manga = getMangaById(mangaId);
+  if (!manga) return [];
+
+  const existingChapters = mockData.chapters.filter((chapter) => chapter.manga_id === Number(mangaId));
+  const existingNumbers = new Set(existingChapters.map((chapter) => Number(chapter.chapter_number)));
+  const mockChapters = createMockChapters(manga).filter((chapter) => !existingNumbers.has(Number(chapter.chapter_number)));
+
+  return [...existingChapters, ...mockChapters].sort((a, b) => Number(b.chapter_number) - Number(a.chapter_number));
+};
+
+export const getChapterById = (chapterId) => {
+  const realChapter = mockData.chapters.find((chapter) => chapter.chapter_id === Number(chapterId));
+  if (realChapter) return realChapter;
+
+  return mockData.allMangas
+    .flatMap((manga) => createMockChapters(manga))
+    .find((chapter) => chapter.chapter_id === Number(chapterId));
+};
+
+export const getReaderPages = (mangaId, chapterId) => {
+  const manga = getMangaById(mangaId);
+  const chapter = getChapterById(chapterId);
+  if (!manga || !chapter) return [];
+
+  return Array.from({ length: 6 }, (_, index) => ({
+    page_number: index + 1,
+    image_url: `https://picsum.photos/seed/${manga.slug}-${chapter.chapter_number}-${index + 1}/900/1300`,
+  }));
+};
+
 export const getGenres = () => mockData.genres;
 
 export const getAuthors = () => mockData.authors;
@@ -388,4 +440,45 @@ export const deleteComment = (commentId) => {
   const nextComments = comments.filter((comment) => !idsToDelete.has(comment.comment_id));
   writeStorage(STORAGE_KEYS.comments, nextComments);
   return { ok: true, message: "Xóa bình luận thành công.", comments: nextComments };
+}
+
+export const createNewManga = async (mangaData) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const currentUser = JSON.parse(localStorage.getItem('currentUserId')); 
+      const uploaderName = currentUser ? currentUser.username : "nyancat";
+      const existingMangas = JSON.parse(localStorage.getItem('mangas')) || [];
+
+      const newComic = {
+        id: Date.now(), 
+        ...mangaData,
+        uploader_username: uploaderName, 
+        coverImage: mangaData.coverImage || "https://i.imgur.com/3n7f1bF.jpg", 
+        status: "Đang tiến hành"
+      };
+      existingMangas.push(newComic);
+      localStorage.setItem('mangas', JSON.stringify(existingMangas));
+
+      console.log(" Đã lưu truyện vào LocalStorage:", newComic);
+      resolve({ 
+        ok: true, 
+        message: "Thêm truyện thành công!", 
+        manga: newComic 
+      });
+    }, 1500);
+  });
+};
+// frontend/src/data/api.js
+
+export const becomeUploader = () => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
+
+  const users = getUsers();
+  const nextUsers = users.map((user) =>
+    user.id === userId ? { ...user, is_uploader: true } : user
+  );
+
+  writeStorage(STORAGE_KEYS.users, nextUsers);
+  return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
 };
