@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const { generateAccessToken, generateRefreshToken, verifyToken, jwtConfig } = require('../config/jwt');
 
 function toPublicUser(row) {
   return {
@@ -43,9 +44,56 @@ async function login(req, res, next) {
       return res.status(403).json({ message: 'Tài khoản này đang bị khóa.' });
     }
 
+    // Generate JWT tokens
+    const accessToken = generateAccessToken(foundUser);
+    const refreshToken = generateRefreshToken(foundUser);
+
+    await db.query(
+      'UPDATE users SET refresh_token = $1 WHERE user_id = $2',
+      [refreshToken, foundUser.user_id]
+    );
+
     return res.status(200).json({
       message: 'Đăng nhập thành công.',
+      accessToken,
+      refreshToken,
+      expiresIn: jwtConfig.EXPIRES_IN,
       user: toPublicUser(foundUser)
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function refreshAccessToken(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token được yêu cầu' });
+    }
+
+    // Verify refresh token trước
+    const decoded = verifyToken(refreshToken);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Refresh token không hợp lệ hoặc đã hết hạn' });
+    }
+
+    const user = await db.query(
+      'SELECT * FROM users WHERE user_id = $1',
+      [decoded.user_id]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    }
+
+    const newAccessToken = generateAccessToken(user.rows[0]);
+
+    return res.status(200).json({
+      message: 'Token đã được cập nhật',
+      accessToken: newAccessToken,
+      expiresIn: jwtConfig.EXPIRES_IN
     });
   } catch (error) {
     next(error);
@@ -65,8 +113,9 @@ async function register(req, res, next) {
       return res.status(400).json({ message: 'Tên người dùng cần ít nhất 3 ký tự.' });
     }
 
-    if (!email.includes('@')) {
-      return res.status(400).json({ message: 'Email không hợp lệ.' });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Email không hợp lệ.' });
     }
 
     if (password.length < 6) {
@@ -127,7 +176,47 @@ async function register(req, res, next) {
   }
 }
 
+async function updateUserAccess(req, res, next) {
+  try {
+    const { userId, isBanned, userRole } = req.body;
+    if (!userId) return res.status(400).json({ message: 'User ID is required' });
+
+    // Ít nhất một trường phải có
+    if (!isBanned && !userRole) {
+      return res.status(400).json({ message: 'At least one field are required' });
+    }
+
+    const user = await db.query(
+      'SELECT * FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const isBannedParam = isBanned !== undefined ? isBanned : null;
+    const userRoleParam = userRole !== undefined ? userRole : null;
+
+    const updatedUser = await db.query(
+      `UPDATE users 
+      SET is_banned = COALESCE($1, is_banned), 
+          user_role = COALESCE($2, user_role) 
+      WHERE user_id = $3 
+      RETURNING *`,
+      [isBannedParam, userRoleParam, userId]
+    );
+
+    return res.status(200).json({
+      message: 'Đã cập nhật thông tin người dùng.',
+      user: toPublicUser(updatedUser.rows[0])
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 module.exports = {
   login,
-  register
+  register,
+  updateUserAccess,
+  refreshAccessToken
 };

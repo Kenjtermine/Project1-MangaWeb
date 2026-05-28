@@ -12,7 +12,8 @@ const env = {
   dbUser: process.env.DB_USER || 'postgres',
   dbPassword: process.env.DB_PASSWORD || '',
   dbName: process.env.DB_NAME || 'mangaweb',
-  dbSsl: String(process.env.DB_SSL || 'false').toLowerCase() === 'true'
+  dbSsl: String(process.env.DB_SSL || 'false').toLowerCase() === 'true',
+  jwtSecret: process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production'
 };
 
 module.exports = env;

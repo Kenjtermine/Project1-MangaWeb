@@ -132,9 +132,10 @@ const Login = () => {
                                     id="rememberMe" 
                                     className="w-4 h-4 cursor-pointer accent-sky-600 rounded" 
                                 />
+                                {/* Đã triển khai refresh token, tiêu chuẩn hiện đại web
                                 <label htmlFor="rememberMe" className="text-sm text-gray-700 cursor-pointer select-none">
                                     Ghi nhớ tôi
-                                </label>
+                                </label> */}
                             </div>
                             {/* Thêm nút Quên mật khẩu cho chuẩn form */}
                             <a href="#" className="text-sm text-sky-600 hover:underline">Quên mật khẩu?</a>

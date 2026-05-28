@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight, FaHome, FaList } from "react-icons/fa";
+import CommentsSection from "../../components/comments/CommentsSection";
 import { addReadingHistory, getChapterById, getChaptersByMangaId, getMangaById, getReaderPages } from "../../data/api";
 
 const ChapterReader = () => {
@@ -106,6 +107,7 @@ const ChapterReader = () => {
             </Link>
           )}
         </div>
+        <CommentsSection chapterId={chapter.chapter_id} />
       </main>
     </div>
   );

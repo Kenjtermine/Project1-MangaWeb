@@ -94,7 +94,65 @@ async function createComment(req, res, next) {
   }
 }
 
+async function deleteComment(req, res, next) {
+  try {
+    const commentId = Number(req.query.commentId);
+
+    if (!Number.isInteger(commentId) || commentId <= 0) {
+      return res.status(400).json({ message: 'commentId is invalid' });
+    }
+
+    const result = await db.query(
+      `
+        UPDATE comments
+        SET is_deleted = true
+        WHERE comment_id = $1
+      `,
+      [commentId]
+    );
+
+    return res.json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function toggleCommentReaction(req, res, next) {
+  try {
+    // 1. Lấy userId từ token (bảo mật) và data từ body
+    const { commentId, reactionType, userId } = req.body; // reactionType chỉ nhận 'like' hoặc 'dislike'
+
+    if (!['like', 'dislike'].includes(reactionType)) {
+        return res.status(400).json({ message: "Loại reaction không hợp lệ" });
+    }
+
+    // 2. TĂNG/GIẢM TRỰC TIẾP TRÊN DATABASE MÀ KHÔNG CẦN FRONTEND GỬI SỐ LƯỢNG
+    let updateQuery = "";
+    if (reactionType === 'like') {
+        updateQuery = 'UPDATE comments SET like_count = like_count + 1 WHERE comment_id = $1 RETURNING *';
+    } else {
+        updateQuery = 'UPDATE comments SET dislike_count = dislike_count + 1 WHERE comment_id = $1 RETURNING *';
+    }
+
+    const result = await db.query(updateQuery, [commentId]);
+
+    if (result.rows.length === 0) {
+        return res.status(404).json({ message: "Không tìm thấy bình luận" });
+    }
+
+    return res.status(200).json({ 
+        message: "Thao tác thành công",
+        comment: result.rows[0] // Trả về comment với số like mới nhất để Frontend cập nhật UI
+    });
+
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getComments,
-  createComment
+  createComment,
+  deleteComment,
+  toggleCommentReaction
 };

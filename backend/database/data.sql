@@ -92,11 +92,11 @@ VALUES
 -- =========================================================
 -- RATINGS DATA
 -- =========================================================
-INSERT INTO ratings (user_id, manga_id, score, review_text, created_at, updated_at)
+INSERT INTO ratings (user_id, manga_id, score, created_at, updated_at)
 VALUES
-  (1, 1, 5, 'Đọc lâu nhưng vẫn cuốn.', '2026-04-20T08:00:00Z', '2026-04-20T08:00:00Z'),
-  (1, 7, 5, 'Cày rất đã.', '2026-04-21T08:00:00Z', '2026-04-21T08:00:00Z'),
-  (2, 5, 4, 'Nhẹ nhàng.', '2026-04-22T08:00:00Z', '2026-04-22T08:00:00Z');
+  (1, 1, 5, '2026-04-20T08:00:00Z', '2026-04-20T08:00:00Z'),
+  (1, 7, 5, '2026-04-21T08:00:00Z', '2026-04-21T08:00:00Z'),
+  (2, 5, 4, '2026-04-22T08:00:00Z', '2026-04-22T08:00:00Z');
 
 -- =========================================================
 -- USER FAVORITES DATA
@@ -123,8 +123,8 @@ VALUES
 -- =========================================================
 INSERT INTO comments (chapter_id, user_id, parent_comment_id, root_comment_id, content, like_count, dislike_count, is_deleted, created_at, updated_at)
 VALUES
-  (1, 1, NULL, 1, 'Chap này hay thật, đoạn cuối để lại nhiều thứ để bàn.', 12, 0, FALSE, '2026-04-25T00:00:00Z', '2026-04-25T00:00:00Z'),
-  (1, 2, 1, 1, 'Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.', 6, 0, FALSE, '2026-04-25T01:00:00Z', '2026-04-25T01:00:00Z');
+  (3, 1, NULL, 1, 'Chap này hay thật, đoạn cuối để lại nhiều thứ để bàn.', 12, 0, FALSE, '2026-04-25T00:00:00Z', '2026-04-25T00:00:00Z'),
+  (3, 2, 1, 1, 'Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.', 6, 0, FALSE, '2026-04-25T01:00:00Z', '2026-04-25T01:00:00Z');
 
 -- =========================================================
 -- NOTIFICATIONS DATA

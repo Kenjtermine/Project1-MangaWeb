@@ -17,7 +17,7 @@ CREATE DATABASE mangaweb;
 -- =========================================================
 
 CREATE TYPE user_gender AS ENUM ('male', 'female', 'other');
-CREATE TYPE user_role AS ENUM ('admin', 'user', 'poster');
+CREATE TYPE user_role AS ENUM ('admin', 'user', 'uploader');
 CREATE TYPE manga_status AS ENUM ('ongoing', 'completed', 'hiatus', 'cancelled');
 CREATE TYPE library_status AS ENUM ('following', 'completed', 'dropped', 'plan_to_read');
 CREATE TYPE reaction_type AS ENUM ('like', 'dislike');
@@ -38,6 +38,7 @@ CREATE TABLE users (
   user_gender user_gender DEFAULT 'other',
   user_role user_role NOT NULL DEFAULT 'user',
   is_banned BOOLEAN NOT NULL DEFAULT FALSE,
+  refresh_token TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_users_name_len CHECK (char_length(trim(user_name)) >= 3),

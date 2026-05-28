@@ -1,12 +1,27 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Comment from "./Comment";
 import CommentForm from "./CommentForm";
 import { getComments, getCurrentUser, submitComment, deleteComment } from "../../data/api";
 
-const CommentsSection = ({ chapterId = 1 }) => {
-    const [flatComments, setFlatComments] = useState(() => getComments(chapterId));
+const CommentsSection = ({ chapterId }) => {
+    const [flatComments, setFlatComments] = useState([]);
     const [message, setMessage] = useState("");
     const user = getCurrentUser();
+
+    const fetchComments = async () => {
+        try {
+            const comments = await getComments(chapterId);
+            setFlatComments(comments);
+        } catch (error) {
+            console.error("Lỗi khi tải bình luận", error);
+        }
+    };
+
+    useEffect(() => {
+        if (chapterId) {
+            fetchComments();
+        }
+    }, [chapterId]);
 
     const buildTree = (comments) => {
         const map = new Map();
@@ -33,32 +48,18 @@ const CommentsSection = ({ chapterId = 1 }) => {
 
     const commentTree = useMemo(() => buildTree(flatComments), [flatComments]);
 
-    const refreshComments = () => {
-        setFlatComments(getComments(chapterId));
-    };
-
-    const handleSubmitComment = ({ content, parentCommentId = null, rootCommentId = null }) => {
-        const result = submitComment({
-            chapterId,
-            content,
-            parentCommentId,
-            rootCommentId,
-        });
-
-        setMessage(result.message);
+    const handleSubmitComment = async ({ content, parentCommentId = null, rootCommentId = null }) => {
+        const result = await submitComment({ chapterId, content, parentCommentId, rootCommentId });
 
         if (result.ok) {
-            refreshComments();
+            await fetchComments();
         }
-
-        return result;
     };
-
-    const handleDeleteComment = (commentId) => {
-        const result = deleteComment(commentId);
+    const handleDeleteComment = async (commentId) => {
+        const result = await deleteComment(commentId);
 
         if (result.ok) {
-            refreshComments();
+            await fetchComments();
         }
     };
 

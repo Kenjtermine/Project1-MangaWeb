@@ -2,7 +2,9 @@ import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { FaBookOpen, FaEye, FaHeart, FaList, FaRss, FaStar, FaTags, FaUser } from "react-icons/fa";
 import FavBtn from "../../components/favorite/FavoriteBt";
-import { getChaptersByMangaId, getGenres, getMangaById } from "../../data/api";
+import RatingBt from "../../components/rating/RatingBt";
+import { getChaptersByMangaId, getGenres, getMangaById, getTotalFavorites } from "../../data/api";
+import { useEffect, useState } from "react";
 
 const statusLabel = {
   ongoing: "Đang tiến hành",
@@ -28,6 +30,8 @@ const MangaDetail = () => {
   const { mangaId } = useParams();
   const manga = getMangaById(mangaId);
   const chapters = getChaptersByMangaId(mangaId);
+
+  const [totalFavorites, setTotalFavorites] = useState(0);
   const genreMap = getGenres().reduce((acc, genre) => {
     acc[genre.id] = genre.name;
     return acc;
@@ -47,6 +51,17 @@ const MangaDetail = () => {
   const firstChapter = chapters[chapters.length - 1];
   const latestChapter = chapters[0];
   const genreNames = (manga.genreIds || []).map((id) => genreMap[id]).filter(Boolean);
+
+  useEffect(() => {
+    const fetchTotalFavorites = async () => {
+      const count = await getTotalFavorites(mangaId);
+      setTotalFavorites(count);
+    };
+
+    if (mangaId) {
+      fetchTotalFavorites();
+    }
+  }, [mangaId]);
 
   return (
     <div className="min-h-screen bg-neutral-900 px-6 py-8 text-white md:px-8">
@@ -86,21 +101,20 @@ const MangaDetail = () => {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-1 text-yellow-400">
-              {Array.from({ length: 5 }, (_, index) => (
-                <FaStar key={index} className={index < Math.round(manga.avg_rating || 0) ? "" : "text-neutral-600"} />
-              ))}
+          <div className="mt-5 flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-300">Đánh giá:</span>
+                <RatingBt mangaId={manga.id} />
+              </div>
             </div>
-            <span className="text-sm text-gray-300">
-              {manga.avg_rating || 0}/5 - {formatNumber(manga.rating_count)} lượt đánh giá
-            </span>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <FavBtn mangaId={manga.id} />
             <span className="flex items-center gap-2 text-sm text-gray-300">
-              <FaHeart className="text-rose-400" /> {formatNumber(Math.max(1000, manga.total_views / 12))} người đã theo dõi
+              {/* Fake data for demo */}
+              <FaHeart className="text-rose-400" /> {formatNumber(totalFavorites + 26720)} người đã theo dõi
             </span>
           </div>
 

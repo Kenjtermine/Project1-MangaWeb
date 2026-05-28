@@ -14,9 +14,11 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
 
     const isPoster = currentUser && Number(currentUser.user_id) === Number(commentData.user_id);
 
-    const handleReaction = (type) => {
-        const result = toggleReaction({ commentId: commentData.comment_id, reaction: type });
-
+    const handleReaction = async (type) => {
+        const action = type === reaction ? "remove" : "add";
+        try {
+        const result = await toggleReaction({ commentId: commentData.comment_id, reaction: type });
+    
         if (result.ok) {
             // 1. Cập nhật trạng thái nút bấm (xanh/đỏ)
             setReaction(reaction === type ? null : type);
@@ -24,11 +26,17 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
             // 2. CẬP NHẬT CẢ 2 CON SỐ TỪ BACKEND TRẢ VỀ
             setLikeCount(result.comment.like_count);
             setDislikeCount(result.comment.dislike_count);
+        } else {
+            console.warn("API báo lỗi nhưng không sập:", result.message);
         }
+    } catch (error) {
+        console.error(" Lỗi sập hàm khi gọi API:", error);
+    }
     }
 
-    const handleSubmitReply = (replyText) => {
-        const result = onSubmitReply?.({
+    const handleSubmitReply = async (replyText) => { 
+        // Thêm await để chờ Backend xử lý xong
+        const result = await onSubmitReply?.({
             content: replyText,
             parentCommentId: commentData.comment_id,
             rootCommentId: commentData.root_comment_id || commentData.comment_id,
@@ -37,7 +45,7 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
         setReplyMessage(result?.message || "");
 
         if (result?.ok) {
-            setIsReplying(false);
+            setIsReplying(false); // Sẽ chạy đúng và đóng form lại
         }
 
         return result;
@@ -130,6 +138,7 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
                                     commentData={replyData}
                                     currentUser={currentUser}
                                     onSubmitReply={onSubmitReply}
+                                    onDelete={onDelete}
                                 />
                             ))}
                         </div>

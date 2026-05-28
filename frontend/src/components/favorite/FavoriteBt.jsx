@@ -1,19 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { isFavoriteManga, toggleFavoriteManga } from "../../data/api";
 import { toast } from "react-hot-toast";
 
 const FavBtn = ({ mangaId = 1, className = "", buttonClassName = "", compact = false }) => {
-    const [isClicked, setIsClicked] = useState(isFavoriteManga(mangaId));
+    const [isClicked, setIsClicked] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [message, setMessage] = useState("");
 
-    const handleToggle = () => {
-        const result = toggleFavoriteManga(mangaId);
-        setIsClicked(result.isFavorite);
-        setMessage(result.message);
-        window.setTimeout(() => setMessage(""), 1800);
+    // Check favorite status khi component load
+    useEffect(() => {
+        const checkFavorite = async () => {
+            try {
+                const isFav = await isFavoriteManga(mangaId);
+                setIsClicked(isFav);
+            } catch (error) {
+                console.error('Lỗi kiểm tra favorite:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        checkFavorite();
+    }, [mangaId]);
 
-        if (result.ok == false) {
-            toast.error(result.message);
+    const handleToggle = async () => {
+        setIsLoading(true);
+        try {
+            const result = await toggleFavoriteManga(mangaId);
+            setIsClicked(result.isFavorite);
+            setMessage(result.message);
+            window.setTimeout(() => setMessage(""), 1800);
+
+            if (result.ok === false) {
+                toast.error(result.message);
+            } else {
+                toast.success(result.message);
+            }
+        } catch (error) {
+            toast.error('Lỗi: ' + error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -22,6 +47,7 @@ const FavBtn = ({ mangaId = 1, className = "", buttonClassName = "", compact = f
             <button
                 type="button"
                 onClick={handleToggle}
+                disabled={isLoading}
                 aria-label={isClicked ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
                 title={isClicked ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích"}
                 className={`font-bold rounded-md border transition flex items-center justify-center ${
@@ -30,7 +56,7 @@ const FavBtn = ({ mangaId = 1, className = "", buttonClassName = "", compact = f
                     isClicked
                         ? "border-red-500 bg-red-500 text-white hover:bg-red-600"
                         : "border-neutral-600 bg-neutral-800 text-white hover:border-red-400 hover:bg-neutral-700 hover:text-red-300"
-                } ${buttonClassName}`}
+                } ${buttonClassName} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
                 {/* Dùng far fa-heart-o cho trái tim rỗng (FontAwesome 5-6) */}
                 {isClicked ? <i className="fa fa-heart text-xl"></i> : <i className="far fa-heart text-xl"></i>}

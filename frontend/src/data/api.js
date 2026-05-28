@@ -32,22 +32,30 @@ const normalizeText = (value = "") => value.toString().trim().toLowerCase();
 
 const request = async (path, options = {}) => {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
 
-  const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    if (!response.ok) {
+      throw new Error(data.message || "Request failed");
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return data;
 };
 
 const getFavorites = () => readStorage(STORAGE_KEYS.favorites, mockData.user_favorites);
@@ -241,52 +249,83 @@ export const clearUserNotifications = () => {
   return [];
 };
 
-export const getUserFavorites = () => {
+// Favorite APIs
+export const getUserFavorites = async () => {
   const userId = getCurrentUserId();
   if (!userId) return [];
 
-  return getFavorites()
-    .filter((favorite) => favorite.user_id === userId)
-    .map((favorite) => ({ ...favorite, manga: getMangaById(favorite.manga_id) }))
-    .filter((favorite) => favorite.manga);
+  try {
+    const data = await request(`/api/favorite/get-user-favorites/${userId}`, {
+      method: 'GET'
+    });
+    return data.favorites || [];
+  } catch (error) {
+    console.error('Lỗi lấy danh sách yêu thích:', error);
+    return [];
+  }
 };
 
-export const isFavoriteManga = (mangaId) => {
+export const isFavoriteManga = async (mangaId) => {
   const userId = getCurrentUserId();
   if (!userId) return false;
-  return getFavorites().some((favorite) => favorite.user_id === userId && favorite.manga_id === Number(mangaId));
+
+  try {
+    const data = await request(`/api/favorite/check-is-favorited?userId=${userId}&mangaId=${Number(mangaId)}`, {
+      method: 'GET'
+    });
+    return data.isFavorited;
+  } catch (error) {
+    console.error('Lỗi kiểm tra favorite:', error);
+    return false;
+  }
 };
 
-export const toggleFavoriteManga = (mangaId) => {
+export const toggleFavoriteManga = async (mangaId) => {
   const userId = getCurrentUserId();
   if (!userId) return { ok: false, isFavorite: false, message: "Bạn cần đăng nhập để thêm yêu thích." };
 
-  const targetId = Number(mangaId);
-  const favorites = getFavorites();
-  const existed = favorites.some((favorite) => favorite.user_id === userId && favorite.manga_id === targetId);
-  const nextFavorites = existed
-    ? favorites.filter((favorite) => !(favorite.user_id === userId && favorite.manga_id === targetId))
-    : [...favorites, { user_id: userId, manga_id: targetId, created_at: new Date().toISOString() }];
+  try {
+    const data = await request('/api/favorite/toggle-favorite', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+    });
 
-  writeStorage(STORAGE_KEYS.favorites, nextFavorites);
-  return {
-    ok: true,
-    isFavorite: !existed,
-    message: existed ? "Đã bỏ khỏi danh sách yêu thích." : "Đã thêm vào danh sách yêu thích.",
-  };
+    return {
+      ok: true,
+      isFavorite: data.isFavorited,
+      message: data.message
+    };
+  } catch (error) {
+    return { ok: false, isFavorite: false, message: error.message || "Lỗi khi toggle yêu thích." };
+  }
 };
 
-export const removeFavoriteManga = (mangaId) => {
+export const removeFavoriteManga = async (mangaId) => {
   const userId = getCurrentUserId();
   if (!userId) return { ok: false, message: "Bạn cần đăng nhập." };
 
-  const targetId = Number(mangaId);
-  const nextFavorites = getFavorites().filter(
-    (favorite) => !(favorite.user_id === userId && favorite.manga_id === targetId)
-  );
-  writeStorage(STORAGE_KEYS.favorites, nextFavorites);
+  try {
+    const data = await request('/api/favorite/toggle-favorite', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+    });
 
-  return { ok: true, isFavorite: false, message: "Đã xóa khỏi danh sách yêu thích." };
+    return { ok: true, isFavorite: false, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi xóa yêu thích." };
+  }
+};
+
+export const getTotalFavorites = async (mangaId) => {
+  try {
+    const data = await request(`/api/favorite/get-total-favorites/${mangaId}`, {
+      method: 'GET'
+    });
+    return data.totalFavorites;
+  } catch (error) {
+    console.error('Lỗi lấy tổng favorite:', error);
+    return 0;
+  }
 };
 
 export const getUserReadingHistory = () => {
@@ -340,106 +379,178 @@ const normalizeComment = (comment) => {
   };
 };
 
-export const getComments = (chapterId = 1) => {
-  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
+const getStoredComments = () => readStorage(STORAGE_KEYS.comments, []);
 
-  return comments
-    .filter((comment) => Number(comment.chapter_id || 1) === Number(chapterId))
-    .map(normalizeComment)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-};
+const getMockCommentIds = () => new Set(mockData.comments.map((comment) => Number(comment.comment_id)));
 
-export const submitComment = ({ chapterId = 1, content, parentCommentId = null, rootCommentId = null }) => {
-  const user = getCurrentUser();
-  const text = content?.trim();
-
-  if (!user) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
-  if (!text) return { ok: false, message: "Nội dung bình luận không được để trống." };
-  if (text.length > 1000) return { ok: false, message: "Bình luận tối đa 1000 ký tự." };
-
-  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
-  const nextId = Math.max(...comments.map((comment) => Number(comment.comment_id) || 0), 0) + 1;
-  const createdAt = new Date().toISOString();
-  const newComment = {
-    comment_id: nextId,
-    user_id: Number(user.user_id),
-    user_name: user.user_name,
-    user_avatar: user.user_avatar,
-    chapter_id: Number(chapterId),
-    parent_comment_id: parentCommentId ? Number(parentCommentId) : null,
-    root_comment_id: rootCommentId ? Number(rootCommentId) : parentCommentId ? Number(parentCommentId) : nextId,
-    content: text,
-    like_count: 0,
-    dislike_count: 0,
-    userReactions: {},
-    is_deleted: false,
-    created_at: createdAt,
-    updated_at: createdAt,
-  };
-
-  writeStorage(STORAGE_KEYS.comments, [newComment, ...comments]);
+const mergeStoredComment = (mockComment, storedComment) => {
+  if (!storedComment) return mockComment;
 
   return {
-    ok: true,
-    message: "Đã gửi bình luận.",
-    comment: normalizeComment(newComment),
-    comments: getComments(chapterId),
+    ...mockComment,
+    like_count: storedComment.like_count ?? mockComment.like_count,
+    dislike_count: storedComment.dislike_count ?? mockComment.dislike_count,
+    userReactions: storedComment.userReactions || mockComment.userReactions || {},
+    is_deleted: storedComment.is_deleted ?? mockComment.is_deleted,
+    updated_at: storedComment.updated_at || mockComment.updated_at,
   };
 };
 
-export const toggleReaction = ({ commentId, reaction }) => {
-  const currentUserId = getCurrentUserId();
-  if (!currentUserId) return { ok: false, message: "Cần đăng nhập để reaction." };
+const getMergedComments = () => {
+  const mockCommentIds = getMockCommentIds();
+  const storedComments = getStoredComments().filter(Boolean);
+  const storedById = new Map(storedComments.map((comment) => [Number(comment.comment_id), comment]));
 
-  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
-  const nextComments = comments.map((item) => ({ ...item, userReactions: { ...(item.userReactions || {}) } }));
-  const comment = nextComments.find((item) => item.comment_id === Number(commentId));
+  const mergedMockComments = mockData.comments.map((comment) =>
+    mergeStoredComment(comment, storedById.get(Number(comment.comment_id)))
+  );
+  const userComments = storedComments.filter((comment) => comment.is_local || !mockCommentIds.has(Number(comment.comment_id)));
 
-  if (!comment) return { ok: false, message: "Bình luận không tồn tại." };
-
-  const userCurrentReaction = comment.userReactions[currentUserId];
-
-  if (userCurrentReaction === reaction) {
-    const countKey = reaction === "like" ? "like_count" : "dislike_count";
-    comment[countKey] = Math.max(0, (comment[countKey] || 0) - 1);
-    delete comment.userReactions[currentUserId];
-  } else {
-    if (userCurrentReaction) {
-      const oldKey = userCurrentReaction === "like" ? "like_count" : "dislike_count";
-      comment[oldKey] = Math.max(0, (comment[oldKey] || 0) - 1);
-    }
-
-    const newKey = reaction === "like" ? "like_count" : "dislike_count";
-    comment[newKey] = (comment[newKey] || 0) + 1;
-    comment.userReactions[currentUserId] = reaction;
-  }
-
-  writeStorage(STORAGE_KEYS.comments, nextComments);
-  return { ok: true, message: "Reaction thành công.", comment: normalizeComment(comment) };
+  return [...mergedMockComments, ...userComments].filter((comment) => !comment.is_deleted);
 };
 
-export const deleteComment = (commentId) => {
-  const currentUserId = getCurrentUserId();
-  if (!currentUserId) return { ok: false, message: "Bạn cần đăng nhập." };
+const saveStoredComments = (comments) => {
+  const mockCommentIds = getMockCommentIds();
+  const mockCommentById = new Map(mockData.comments.map((comment) => [Number(comment.comment_id), comment]));
+  const storedComments = comments.filter((comment) => {
+    const isMockComment = mockCommentIds.has(Number(comment.comment_id));
+    if (comment.is_local || !isMockComment) return true;
 
-  const comments = readStorage(STORAGE_KEYS.comments, mockData.comments);
-  const targetId = Number(commentId);
-  const idsToDelete = new Set([targetId]);
+    const mockComment = mockCommentById.get(Number(comment.comment_id));
+    const hasMockOverride =
+      comment.is_deleted ||
+      Object.keys(comment.userReactions || {}).length > 0 ||
+      Number(comment.like_count || 0) !== Number(mockComment?.like_count || 0) ||
+      Number(comment.dislike_count || 0) !== Number(mockComment?.dislike_count || 0);
 
-  let changed = true;
-  while (changed) {
-    changed = false;
-    comments.forEach((comment) => {
-      if (idsToDelete.has(Number(comment.parent_comment_id)) && !idsToDelete.has(comment.comment_id)) {
-        idsToDelete.add(comment.comment_id);
-        changed = true;
-      }
+    return hasMockOverride;
+  });
+
+  writeStorage(STORAGE_KEYS.comments, storedComments);
+};
+
+export const getComments = async (chapterId = 1) => {
+  // use api real and db data
+  const comments = await request(`/api/comments/get-comments?chapterId=${chapterId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return comments.comments.map(normalizeComment).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+};
+
+export const submitComment = async ({ chapterId, content, parentCommentId = null, rootCommentId = null }) => {
+  try {
+    const user = getCurrentUser(); // Lấy user từ LocalStorage
+    
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
+    if (!content?.trim()) return { ok: false, message: "Nội dung bình luận không được để trống." };
+
+    // Bắn request xuống Backend Node.js
+    const data = await request("/api/comments/create-comment", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: user.user_id, // Gửi kèm userId
+        chapterId,
+        content,
+        parentCommentId,
+        rootCommentId
+      }),
     });
-  }
 
-  const nextComments = comments.filter((comment) => !idsToDelete.has(comment.comment_id));
-  writeStorage(STORAGE_KEYS.comments, nextComments);
-  return { ok: true, message: "Xóa bình luận thành công.", comments: nextComments };
+    // Trả kết quả về cho CommentsSection.jsx xử lý (hiện thông báo, load lại bình luận)
+    return {
+      ok: true,
+      message: "Đã gửi bình luận.",
+      comment: data.comment, // Trả về object comment vừa được tạo từ DB
+    };
+
+  } catch (error) {
+    return { ok: false, message: error.message || "Có lỗi xảy ra khi gửi bình luận." };
+  }
+};
+
+export const toggleReaction = async ({ commentId, reaction }) => {
+  try {
+    const user = getCurrentUser(); // Lấy user từ LocalStorage
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập để thả biểu cảm." };
+
+    // Bắn thẳng hành động (reaction) xuống Backend
+    const data = await request("/api/comments/reaction", {
+      method: "POST",
+      body: JSON.stringify({ 
+        userId: user.user_id,
+        commentId: commentId,
+        reactionType: reaction // 'like' hoặc 'dislike'
+      }),
+    });
+
+    return { 
+        ok: true, 
+        message: "Reaction thành công.", 
+        comment: data.comment // Data mới nhất từ DB
+    };
+
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi reaction." };
+  }
+};
+
+// Rating APIs
+export const getRatingStats = async (mangaId) => {
+  try {
+    const data = await request(`/api/rating/get-rating-stats/${mangaId}`, {
+      method: 'GET'
+    });
+    return {
+      avg_rating: data.avg_rating || 0,
+      rating_count: data.rating_count || 0
+    };
+  } catch (error) {
+    console.error('Lỗi lấy thống kê rating:', error);
+    return {
+      avg_rating: 0,
+      rating_count: 0
+    };
+  }
+};
+
+export const submitRating = async (mangaId, ratingScore) => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập để đánh giá." };
+
+  try {
+    const data = await request('/api/rating/submit-rating', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId), rating_score: Number(ratingScore) })
+    });
+
+    return {
+      ok: true,
+      message: data.message || "Đã gửi đánh giá xếp hạng."
+    };
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi gửi đánh giá." };
+  }
+};
+
+export const deleteComment = async (commentId) => {
+  try {
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) return { ok: false, message: "Bạn cần đăng nhập." };
+    
+    // Bắn request xuống Backend Node.js
+    await request("/api/comments/delete-comment", {
+      method: "POST",
+      body: JSON.stringify({ commentId }),
+    });
+
+  }
+  catch (error) {
+    return { ok: false, message: error.message || "Có lỗi xảy ra khi xóa bình luận." };
+  }
 }
 
 export const createNewManga = async (mangaData) => {
@@ -470,15 +581,31 @@ export const createNewManga = async (mangaData) => {
 };
 // frontend/src/data/api.js
 
-export const becomeUploader = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
+export const becomeUploader = async () => {
+  // const userId = getCurrentUserId();
+  // if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
 
-  const users = getUsers();
-  const nextUsers = users.map((user) =>
-    user.id === userId ? { ...user, is_uploader: true } : user
-  );
+  // const users = getUsers();
+  // const nextUsers = users.map((user) =>
+  //   user.id === userId ? { ...user, is_uploader: true } : user
+  // );
 
-  writeStorage(STORAGE_KEYS.users, nextUsers);
-  return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập trước." };
+    if (user.user_role === "admin") return { ok: false, message: "Admin không thể trở thành Uploader." };
+    if (user.user_role === "uploader") return { ok: false, message: "Bản đã trở thành Uploader." };
+    
+    const becomesUploader = await request("/api/auth/update-user-access", {
+      method: "POST",
+      body: JSON.stringify({ userId: user.user_id, isBanned: false, userRole: "uploader" }),
+    });
+
+    const updatedUser = { ...user, user_role: "uploader" };
+    writeStorage(STORAGE_KEYS.currentUser, updatedUser);
+    
+    return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng nhập thất bại." };
+  }
 };

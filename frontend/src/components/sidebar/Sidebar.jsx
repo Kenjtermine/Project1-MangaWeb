@@ -8,6 +8,7 @@ import { getCurrentUser, getUserNotification, logoutUser } from "../../data/api"
 
 const Sidebar = () => {
     const user = getCurrentUser();
+    const isUploader = user?.user_role?.toLowerCase() === "uploader";
     const notificationCount = getUserNotification().filter(noti => noti.is_read === false).length; // Lấy số lượng thông báo chưa đọc
     const [isGenreOpen, setIsGenreOpen] = useState(false);
     // Sử dụng hook: Truyền vào một hàm để đóng popup
@@ -91,7 +92,7 @@ const Sidebar = () => {
                     )}
                 </ul>
             </div>
-            {user && user.is_uploader && (
+            {user && isUploader && (
                 <div>
                     <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Dành cho tác giả</div>
                     <ul>
@@ -110,7 +111,7 @@ const Sidebar = () => {
                 <ul>
                     <li><Link to="/about" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Về MangaWeb</Link></li>
 
-                    {user && !user.is_uploader && user.role !== "Admin" && (
+                    {user && !isUploader && user.role !== "Admin" && (
                         <li>
                             <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition text-yellow-300">
                                  Trở thành Uploader

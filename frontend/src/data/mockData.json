@@ -299,7 +299,7 @@
   "comments": [
     {
       "comment_id": 1,
-      "chapter_id": 1,
+      "chapter_id": 3,
       "user_id": 1,
       "user": "Anh Kiet",
       "avatar": "https://i.imgur.com/1n7f1bF.jpg",
@@ -312,11 +312,11 @@
     },
     {
       "comment_id": 2,
-      "chapter_id": 1,
+      "chapter_id": 3,
       "user_id": 2,
       "user": "Khang Le",
       "avatar": "https://i.imgur.com/2n7f1bF.jpg",
-      "content": "Mình cũng đang hóng chap mới, nhịp truyện đang rất ổn.",
+      "content": "Đây là kết thúc rồi sao?",
       "parent_comment_id": 1,
       "root_comment_id": 1,
       "like_count": 6,
