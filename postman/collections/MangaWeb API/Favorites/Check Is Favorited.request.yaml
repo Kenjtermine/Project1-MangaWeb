@@ -1,0 +1,15 @@
+$kind: http-request
+name: Check Is Favorited
+method: GET
+url: '{{baseUrl}}/api/favorite/check-is-favorited'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+queryParams:
+  - key: userId
+    value: '1'
+  - key: mangaId
+    value: '1'
+order: 2000

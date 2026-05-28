@@ -1,0 +1,21 @@
+$kind: http-request
+name: Submit Rating
+method: POST
+url: '{{baseUrl}}/api/rating/submit-rating'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": 1,
+      "mangaId": 1,
+      "rating_score": 5
+    }
+order: 1000

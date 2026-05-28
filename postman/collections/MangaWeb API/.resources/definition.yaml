@@ -1,0 +1,10 @@
+$kind: collection
+name: MangaWeb API
+description: 'API collection for MangaWeb - covers Auth, Comments, Favorites, Rating, and Manga endpoints.'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:5000'
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''

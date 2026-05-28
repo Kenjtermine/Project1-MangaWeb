@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Comments
+method: GET
+url: '{{baseUrl}}/api/comments/get-comments'
+queryParams:
+  - key: chapterId
+    value: '1'
+order: 1000
