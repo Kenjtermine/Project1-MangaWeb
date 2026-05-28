@@ -1,9 +1,14 @@
 import mockData from "./mockData.json";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
 const STORAGE_KEYS = {
-  users: "mockUsers",
+  authToken: "authToken",
+  currentUser: "currentUser",
   favorites: "mockFavorites",
   history: "mockReadingHistory",
   notifications: "mockNotifications",
+  comments: "mockComments",
 };
 
 const readStorage = (key, fallback) => {
@@ -19,75 +24,96 @@ const writeStorage = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+const removeStorage = (key) => {
+  localStorage.removeItem(key);
+};
+
 const normalizeText = (value = "") => value.toString().trim().toLowerCase();
 
-const getUsers = () => readStorage(STORAGE_KEYS.users, mockData.users);
+const request = async (path, options = {}) => {
+  const token = getAuthToken();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Request failed");
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 const getFavorites = () => readStorage(STORAGE_KEYS.favorites, mockData.user_favorites);
 const getHistory = () => readStorage(STORAGE_KEYS.history, mockData.reading_history);
 const getNotifications = () => readStorage(STORAGE_KEYS.notifications, mockData.notifications);
 
+export const getAuthToken = () => localStorage.getItem(STORAGE_KEYS.authToken);
+
+export const getCurrentUser = () => readStorage(STORAGE_KEYS.currentUser, null);
+
 export const getCurrentUserId = () => {
-  const userId = localStorage.getItem("currentUserId");
-  return userId ? Number(userId) : null;
+  const user = getCurrentUser();
+  return user?.user_id ? Number(user.user_id) : null;
 };
 
-export const getUserLogin = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return null;
-  return getUsers().find((user) => user.id === userId) || null;
+export const logoutUser = () => {
+  removeStorage(STORAGE_KEYS.authToken);
+  removeStorage(STORAGE_KEYS.currentUser);
 };
 
-export const loginUser = ({ username, password }) => {
-  const loginName = normalizeText(username);
-  const foundUser = getUsers().find(
-    (user) =>
-      (normalizeText(user.username) === loginName || normalizeText(user.email) === loginName) &&
-      user.password === password
-  );
+const saveAuth = ({ user, token }) => {
+  if (token) localStorage.setItem(STORAGE_KEYS.authToken, token);
+  if (user) writeStorage(STORAGE_KEYS.currentUser, user);
+  return user || null;
+};
 
-  if (!foundUser) {
-    return { ok: false, message: "Sai tên đăng nhập/email hoặc mật khẩu." };
+export const loginUser = async ({ username, email, password }) => {
+  const loginName = username || email;
+
+  try {
+    const data = await request("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username: loginName, email: loginName, password }),
+    });
+
+    const user = saveAuth({ user: data.user, token: data.token });
+    return { ok: true, user, message: "Đăng nhập thành công." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng nhập thất bại." };
+  }
+};
+
+export const registerUser = async ({ username, email, password, confirmPassword }) => {
+  if (password !== confirmPassword) {
+    return { ok: false, message: "Mật khẩu nhập lại không khớp." };
   }
 
-  if (foundUser.is_banned) {
-    return { ok: false, message: "Tài khoản này đang bị khóa." };
+  try {
+    const data = await request("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ username, email, password, confirmPassword }),
+    });
+
+    const user = saveAuth({ user: data.user, token: data.token });
+    return { ok: true, user, message: "Đăng ký thành công." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng ký thất bại." };
   }
-
-  localStorage.setItem("currentUserId", foundUser.id);
-  return { ok: true, user: foundUser, message: "Đăng nhập thành công." };
-};
-
-export const registerUser = ({ username, email, password, confirmPassword }) => {
-  const name = username.trim();
-  const mail = email.trim();
-
-  if (name.length < 3) return { ok: false, message: "Tên người dùng cần ít nhất 3 ký tự." };
-  if (!mail.includes("@")) return { ok: false, message: "Email không hợp lệ." };
-  if (password.length < 6) return { ok: false, message: "Mật khẩu cần ít nhất 6 ký tự." };
-  if (password !== confirmPassword) return { ok: false, message: "Mật khẩu nhập lại không khớp." };
-
-  const users = getUsers();
-  const existed = users.some(
-    (user) => normalizeText(user.username) === normalizeText(name) || normalizeText(user.email) === normalizeText(mail)
-  );
-
-  if (existed) return { ok: false, message: "Tên người dùng hoặc email đã tồn tại." };
-
-  const nextUser = {
-    id: Math.max(...users.map((user) => user.id), 0) + 1,
-    username: name,
-    email: mail,
-    password,
-    avatar: "https://i.imgur.com/1n7f1bF.jpg",
-    role: "User",
-    gender: "Khác",
-    is_banned: false,
-    created_at: new Date().toISOString(),
-  };
-
-  writeStorage(STORAGE_KEYS.users, [...users, nextUser]);
-  localStorage.setItem("currentUserId", nextUser.id);
-  return { ok: true, user: nextUser, message: "Đăng ký thành công." };
 };
 
 export const getAllMangas = () => mockData.allMangas;
@@ -189,10 +215,7 @@ export const getRankingMangas = (limit = 10) => {
   }, {});
 
   return mockData.allMangas
-    .map((manga) => ({
-      ...manga,
-      daily_views: dailyViewByManga[manga.id] || 0,
-    }))
+    .map((manga) => ({ ...manga, daily_views: dailyViewByManga[manga.id] || 0 }))
     .sort((a, b) => b.daily_views - a.daily_views || b.total_views - a.total_views)
     .slice(0, limit);
 };
@@ -200,6 +223,7 @@ export const getRankingMangas = (limit = 10) => {
 export const getUserNotification = () => {
   const userId = getCurrentUserId();
   if (!userId) return [];
+
   return getNotifications()
     .filter((noti) => noti.user_id === userId)
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -225,42 +249,83 @@ export const clearUserNotifications = () => {
   return [];
 };
 
-export const getUserFavorites = () => {
+// Favorite APIs
+export const getUserFavorites = async () => {
   const userId = getCurrentUserId();
   if (!userId) return [];
 
-  return getFavorites()
-    .filter((favorite) => favorite.user_id === userId)
-    .map((favorite) => ({
-      ...favorite,
-      manga: getMangaById(favorite.manga_id),
-    }))
-    .filter((favorite) => favorite.manga);
+  try {
+    const data = await request(`/api/favorite/get-user-favorites/${userId}`, {
+      method: 'GET'
+    });
+    return data.favorites || [];
+  } catch (error) {
+    console.error('Lỗi lấy danh sách yêu thích:', error);
+    return [];
+  }
 };
 
-export const isFavoriteManga = (mangaId) => {
+export const isFavoriteManga = async (mangaId) => {
   const userId = getCurrentUserId();
   if (!userId) return false;
-  return getFavorites().some((favorite) => favorite.user_id === userId && favorite.manga_id === Number(mangaId));
+
+  try {
+    const data = await request(`/api/favorite/check-is-favorited?userId=${userId}&mangaId=${Number(mangaId)}`, {
+      method: 'GET'
+    });
+    return data.isFavorited;
+  } catch (error) {
+    console.error('Lỗi kiểm tra favorite:', error);
+    return false;
+  }
 };
 
-export const toggleFavoriteManga = (mangaId) => {
+export const toggleFavoriteManga = async (mangaId) => {
   const userId = getCurrentUserId();
   if (!userId) return { ok: false, isFavorite: false, message: "Bạn cần đăng nhập để thêm yêu thích." };
 
-  const targetId = Number(mangaId);
-  const favorites = getFavorites();
-  const existed = favorites.some((favorite) => favorite.user_id === userId && favorite.manga_id === targetId);
-  const nextFavorites = existed
-    ? favorites.filter((favorite) => !(favorite.user_id === userId && favorite.manga_id === targetId))
-    : [...favorites, { user_id: userId, manga_id: targetId, created_at: new Date().toISOString() }];
+  try {
+    const data = await request('/api/favorite/toggle-favorite', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+    });
 
-  writeStorage(STORAGE_KEYS.favorites, nextFavorites);
-  return {
-    ok: true,
-    isFavorite: !existed,
-    message: existed ? "Đã bỏ khỏi danh sách yêu thích." : "Đã thêm vào danh sách yêu thích.",
-  };
+    return {
+      ok: true,
+      isFavorite: data.isFavorited,
+      message: data.message
+    };
+  } catch (error) {
+    return { ok: false, isFavorite: false, message: error.message || "Lỗi khi toggle yêu thích." };
+  }
+};
+
+export const removeFavoriteManga = async (mangaId) => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập." };
+
+  try {
+    const data = await request('/api/favorite/toggle-favorite', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+    });
+
+    return { ok: true, isFavorite: false, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi xóa yêu thích." };
+  }
+};
+
+export const getTotalFavorites = async (mangaId) => {
+  try {
+    const data = await request(`/api/favorite/get-total-favorites/${mangaId}`, {
+      method: 'GET'
+    });
+    return data.totalFavorites;
+  } catch (error) {
+    console.error('Lỗi lấy tổng favorite:', error);
+    return 0;
+  }
 };
 
 export const getUserReadingHistory = () => {
@@ -302,7 +367,191 @@ export const addReadingHistory = ({ mangaId, chapterId, pageNumber = 1, progress
   return { ok: true, item: nextItem };
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const normalizeComment = (comment) => {
+  return {
+    ...comment,
+    user: comment.user || comment.user_name || "Người dùng ẩn danh",
+    avatar: comment.avatar || comment.user_avatar || "https://i.imgur.com/1n7f1bF.jpg",
+    timestamp: comment.created_at || comment.timestamp,
+    like_count: comment.like_count || 0,
+    dislike_count: comment.dislike_count || 0,
+    userReactions: comment.userReactions || {},
+  };
+};
+
+const getStoredComments = () => readStorage(STORAGE_KEYS.comments, []);
+
+const getMockCommentIds = () => new Set(mockData.comments.map((comment) => Number(comment.comment_id)));
+
+const mergeStoredComment = (mockComment, storedComment) => {
+  if (!storedComment) return mockComment;
+
+  return {
+    ...mockComment,
+    like_count: storedComment.like_count ?? mockComment.like_count,
+    dislike_count: storedComment.dislike_count ?? mockComment.dislike_count,
+    userReactions: storedComment.userReactions || mockComment.userReactions || {},
+    is_deleted: storedComment.is_deleted ?? mockComment.is_deleted,
+    updated_at: storedComment.updated_at || mockComment.updated_at,
+  };
+};
+
+const getMergedComments = () => {
+  const mockCommentIds = getMockCommentIds();
+  const storedComments = getStoredComments().filter(Boolean);
+  const storedById = new Map(storedComments.map((comment) => [Number(comment.comment_id), comment]));
+
+  const mergedMockComments = mockData.comments.map((comment) =>
+    mergeStoredComment(comment, storedById.get(Number(comment.comment_id)))
+  );
+  const userComments = storedComments.filter((comment) => comment.is_local || !mockCommentIds.has(Number(comment.comment_id)));
+
+  return [...mergedMockComments, ...userComments].filter((comment) => !comment.is_deleted);
+};
+
+const saveStoredComments = (comments) => {
+  const mockCommentIds = getMockCommentIds();
+  const mockCommentById = new Map(mockData.comments.map((comment) => [Number(comment.comment_id), comment]));
+  const storedComments = comments.filter((comment) => {
+    const isMockComment = mockCommentIds.has(Number(comment.comment_id));
+    if (comment.is_local || !isMockComment) return true;
+
+    const mockComment = mockCommentById.get(Number(comment.comment_id));
+    const hasMockOverride =
+      comment.is_deleted ||
+      Object.keys(comment.userReactions || {}).length > 0 ||
+      Number(comment.like_count || 0) !== Number(mockComment?.like_count || 0) ||
+      Number(comment.dislike_count || 0) !== Number(mockComment?.dislike_count || 0);
+
+    return hasMockOverride;
+  });
+
+  writeStorage(STORAGE_KEYS.comments, storedComments);
+};
+
+export const getComments = async (chapterId = 1) => {
+  // use api real and db data
+  const comments = await request(`/api/comments/get-comments?chapterId=${chapterId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return comments.comments.map(normalizeComment).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+};
+
+export const submitComment = async ({ chapterId, content, parentCommentId = null, rootCommentId = null }) => {
+  try {
+    const user = getCurrentUser(); // Lấy user từ LocalStorage
+    
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
+    if (!content?.trim()) return { ok: false, message: "Nội dung bình luận không được để trống." };
+
+    // Bắn request xuống Backend Node.js
+    const data = await request("/api/comments/create-comment", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: user.user_id, // Gửi kèm userId
+        chapterId,
+        content,
+        parentCommentId,
+        rootCommentId
+      }),
+    });
+
+    // Trả kết quả về cho CommentsSection.jsx xử lý (hiện thông báo, load lại bình luận)
+    return {
+      ok: true,
+      message: "Đã gửi bình luận.",
+      comment: data.comment, // Trả về object comment vừa được tạo từ DB
+    };
+
+  } catch (error) {
+    return { ok: false, message: error.message || "Có lỗi xảy ra khi gửi bình luận." };
+  }
+};
+
+export const toggleReaction = async ({ commentId, reaction }) => {
+  try {
+    const user = getCurrentUser(); // Lấy user từ LocalStorage
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập để thả biểu cảm." };
+
+    // Bắn thẳng hành động (reaction) xuống Backend
+    const data = await request("/api/comments/reaction", {
+      method: "POST",
+      body: JSON.stringify({ 
+        userId: user.user_id,
+        commentId: commentId,
+        reactionType: reaction // 'like' hoặc 'dislike'
+      }),
+    });
+
+    return { 
+        ok: true, 
+        message: "Reaction thành công.", 
+        comment: data.comment // Data mới nhất từ DB
+    };
+
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi reaction." };
+  }
+};
+
+// Rating APIs
+export const getRatingStats = async (mangaId) => {
+  try {
+    const data = await request(`/api/rating/get-rating-stats/${mangaId}`, {
+      method: 'GET'
+    });
+    return {
+      avg_rating: data.avg_rating || 0,
+      rating_count: data.rating_count || 0
+    };
+  } catch (error) {
+    console.error('Lỗi lấy thống kê rating:', error);
+    return {
+      avg_rating: 0,
+      rating_count: 0
+    };
+  }
+};
+
+export const submitRating = async (mangaId, ratingScore) => {
+  const userId = getCurrentUserId();
+  if (!userId) return { ok: false, message: "Bạn cần đăng nhập để đánh giá." };
+
+  try {
+    const data = await request('/api/rating/submit-rating', {
+      method: 'POST',
+      body: JSON.stringify({ userId, mangaId: Number(mangaId), rating_score: Number(ratingScore) })
+    });
+
+    return {
+      ok: true,
+      message: data.message || "Đã gửi đánh giá xếp hạng."
+    };
+  } catch (error) {
+    return { ok: false, message: error.message || "Lỗi khi gửi đánh giá." };
+  }
+};
+
+export const deleteComment = async (commentId) => {
+  try {
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) return { ok: false, message: "Bạn cần đăng nhập." };
+    
+    // Bắn request xuống Backend Node.js
+    await request("/api/comments/delete-comment", {
+      method: "POST",
+      body: JSON.stringify({ commentId }),
+    });
+
+  }
+  catch (error) {
+    return { ok: false, message: error.message || "Có lỗi xảy ra khi xóa bình luận." };
+  }
+}
 
 export const createNewManga = async (mangaData) => {
   return new Promise((resolve) => {
@@ -332,15 +581,31 @@ export const createNewManga = async (mangaData) => {
 };
 // frontend/src/data/api.js
 
-export const becomeUploader = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
+export const becomeUploader = async () => {
+  // const userId = getCurrentUserId();
+  // if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
 
-  const users = getUsers();
-  const nextUsers = users.map((user) =>
-    user.id === userId ? { ...user, is_uploader: true } : user
-  );
+  // const users = getUsers();
+  // const nextUsers = users.map((user) =>
+  //   user.id === userId ? { ...user, is_uploader: true } : user
+  // );
 
-  writeStorage(STORAGE_KEYS.users, nextUsers);
-  return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { ok: false, message: "Bạn cần đăng nhập trước." };
+    if (user.user_role === "admin") return { ok: false, message: "Admin không thể trở thành Uploader." };
+    if (user.user_role === "uploader") return { ok: false, message: "Bản đã trở thành Uploader." };
+    
+    const becomesUploader = await request("/api/auth/update-user-access", {
+      method: "POST",
+      body: JSON.stringify({ userId: user.user_id, isBanned: false, userRole: "uploader" }),
+    });
+
+    const updatedUser = { ...user, user_role: "uploader" };
+    writeStorage(STORAGE_KEYS.currentUser, updatedUser);
+    
+    return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
+  } catch (error) {
+    return { ok: false, message: error.message || "Đăng nhập thất bại." };
+  }
 };

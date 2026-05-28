@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 import GenreList from "../genre-list/GenreList";
 import useClickOutside from "../../hooks/useClickOutside";
 
-import { getUserNotification } from "../../data/api"; 
-import { getUserLogin } from "../../data/api"; 
+import { getCurrentUser, getUserNotification, logoutUser } from "../../data/api"; 
 
 const Sidebar = () => {
-    const user = getUserLogin();
+    const user = getCurrentUser();
+    const isUploader = user?.user_role?.toLowerCase() === "uploader";
     const notificationCount = getUserNotification().filter(noti => noti.is_read === false).length; // Lấy số lượng thông báo chưa đọc
     const [isGenreOpen, setIsGenreOpen] = useState(false);
     // Sử dụng hook: Truyền vào một hàm để đóng popup
@@ -18,7 +18,7 @@ const Sidebar = () => {
     });
 
     const handleLogOut = () => {
-        localStorage.removeItem("currentUserId"); // Xóa thông tin đăng nhập khỏi localStorage
+        logoutUser(); // Xóa thông tin đăng nhập khỏi localStorage
         window.location.href = "/"; // Chuyển về trang chủ sau khi đăng xuất
     };
 
@@ -87,12 +87,12 @@ const Sidebar = () => {
                     }
                     <li><Link to="/profile" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Profile của tôi</Link></li>
                     {/* Chỉ dành cho role admin có Protected Route */}
-                    {user && user.role === "Admin" && (
+                    {user && user.user_role?.toLowerCase() === "admin" && (
                         <li><Link to="/admin" className="block py-2 px-3 rounded hover:bg-sky-700 transition flex gap-2 items-center">Trang quản trị viên <i className="fa fa-wrench"></i></Link></li>
                     )}
                 </ul>
             </div>
-            {user && user.is_uploader && (
+            {user && isUploader && (
                 <div>
                     <div className="uppercase text-xs text-sky-400 font-bold mb-2 tracking-wider">Dành cho tác giả</div>
                     <ul>
@@ -111,7 +111,7 @@ const Sidebar = () => {
                 <ul>
                     <li><Link to="/about" className="block py-2 px-3 rounded hover:bg-sky-700 transition">Về MangaWeb</Link></li>
 
-                    {user && !user.is_uploader && user.role !== "Admin" && (
+                    {user && !isUploader && user.role !== "Admin" && (
                         <li>
                             <Link to="/studio" className="block py-2 px-3 rounded hover:bg-sky-700 transition text-yellow-300">
                                  Trở thành Uploader

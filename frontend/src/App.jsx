@@ -20,6 +20,7 @@ import ChapterReader from "./pages/manga/ChapterReader";
 import CreatorDashboard from "./pages/admin/CreatorDashboard"; 
 import AdminLayout from "./layouts/AdminLayout";
 import CommentManager from "./pages/admin/CommentManager";
+import UserManager from "./pages/admin/UserManager"
 
 import Sandbox from "./pages/Sandbox"; // Import trang sandbox để test component mới
 
@@ -41,6 +42,8 @@ function App() {
           <Route path="/my-list" element={<MyFavorites />} />
           <Route path="/my-fav" element={<MyFavorites />} />
           <Route path="/history" element={<MyHistory />} />
+          <Route path="/sandbox" element={<Sandbox />} />
+
           <Route path="/studio" element={<CreatorDashboard />} />
           <Route path="/studio/add-comic" element={<AddComic />} />
           <Route path="/studio/add-chapter" element={<AddChapter />} /> 
@@ -50,11 +53,12 @@ function App() {
         
 
         {/* Route sandbox để test component mới, xem hiển thị hay gì đó cứ bỏ vào đây, ta sẽ xóa route này khi xong project */}
-        <Route path="/sandbox" element={<Sandbox />} />
 
         <Route path ="/admin" element={<AdminLayout/>}>
           <Route path="comments" element={<CommentManager />} />
           {/* Các route quản trị khác sẽ được thêm vào đây */}
+          <Route path="users" element={<UserManager/>}/>
+         
         
         </Route>
       </Routes>

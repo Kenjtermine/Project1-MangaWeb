@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'; 
 import { Link } from 'react-router-dom';
-import { getUserLogin, becomeUploader } from '../../data/api';
+import { getCurrentUser, becomeUploader } from '../../data/api';
 
 const CreatorDashboard = () => {
-  const [user, setUser] = useState(getUserLogin());
+  const [user, setUser] = useState(getCurrentUser());
   const [myMangas, setMyMangas] = useState([]); 
 
   useEffect(() => {
-    if (user?.is_uploader) {
+    if (user?.user_role === "uploader") {
       const savedMangas = JSON.parse(localStorage.getItem('mangas')) || [];
       
       const filtered = savedMangas.filter(m => m.uploader_username === user.username);
@@ -17,15 +17,19 @@ const CreatorDashboard = () => {
     }
   }, [user]);
 
-  const handleRegister = () => {
-    const res = becomeUploader();
+  const handleRegister = async () => {
+    const res = await becomeUploader();
     if (res.ok) {
-      setUser(getUserLogin()); 
+      setUser(getCurrentUser()); 
       alert("Chúc mừng! Bạn đã trở thành Uploader của MangaWeb!");
+      window.location.reload();
+    }
+    else {
+      alert(res.message);
     }
   };
 
-  if (user && !user.is_uploader) {
+  if (user && user.user_role !== "uploader" ) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-10 bg-gray-50 min-h-screen">
         <div className="max-w-xl bg-white p-10 rounded-2xl shadow-xl text-center">
@@ -49,7 +53,7 @@ const CreatorDashboard = () => {
     <div className="p-8 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-2xl font-bold text-sky-800">Studio của {user?.username}</h2>
+          <h2 className="text-2xl font-bold text-sky-800">Studio của {user?.user_name}</h2>
           <p className="text-gray-500 text-sm mt-1">Quản lý và đăng tải truyện của bạn tại đây.</p>
         </div>
         <Link to="/studio/add-comic" className="px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 font-semibold shadow-md transition">

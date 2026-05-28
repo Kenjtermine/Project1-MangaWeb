@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { getUserLogin, getUserReadingHistory } from "../../data/api";
+import { getCurrentUser, getUserReadingHistory } from "../../data/api";
 
 const MyHistory = () => {
-    const user = getUserLogin();
+    const user = getCurrentUser();
     const history = getUserReadingHistory();
 
     return (

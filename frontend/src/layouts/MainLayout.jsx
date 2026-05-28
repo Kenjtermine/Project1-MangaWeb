@@ -3,26 +3,29 @@ import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import Sidebar from "../components/sidebar/Sidebar";
 
+const HEADER_HEIGHT_CLASS = "top-24";
+
 const MainLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header cố định */}
-      <Header />
-
-      {/* Phần nội dung thay đổi (Outlet) */}
-      <div className="flex flex-1 w-full py-0 px-0 gap-4">
-        {/* Sidebar */}
-        <aside className="w-1/4 min-w-[180px] max-w-xs h-30">
-          <Sidebar />
-        </aside>
-        {/* Nội dung chính */}
-        <main className="flex-1">
-          <Outlet />
-        </main>
+    <div className="min-h-screen bg-white">
+      <div className="sticky top-0 z-50 bg-white">
+        <Header />
       </div>
 
-      {/* Footer cố định */}
-      <Footer />
+      <div className="flex w-full items-start gap-4">
+        <aside className={`hidden md:block w-1/4 min-w-[180px] max-w-xs shrink-0 sticky ${HEADER_HEIGHT_CLASS} h-[calc(100vh-24px)] overflow-visible z-40`}>
+          <Sidebar />
+        </aside>
+
+        <main className="min-w-0 flex-1 z-10">
+          <div className="flex min-h-[calc(100vh-6rem)] flex-col">
+            <div className="flex-1">
+              <Outlet />
+            </div>
+            <Footer />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

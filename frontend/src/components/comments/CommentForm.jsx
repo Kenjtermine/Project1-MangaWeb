@@ -1,18 +1,22 @@
 import React, { useState } from "react";
+import { getCurrentUser } from "../../data/api";
 
 // Nhận prop placeholder để đổi chữ: "Viết bình luận..." hoặc "Viết phản hồi..."
-const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment }) => {
+const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment, disabled = false }) => {
     const [comment, setComment] = useState("");
+    const user = getCurrentUser();
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
         
         // Ngăn người dùng gửi bình luận trống (toàn dấu cách)
-        if (!comment.trim()) return; 
+        if (!comment.trim() || disabled) return; 
 
         // Gửi dữ liệu ra component cha (nếu có)
         if (onSubmitComment) {
-            onSubmitComment(comment);
+            const result = onSubmitComment(comment);
+            if (result?.ok === false) return;
         }
         
         // Xóa ô nhập sau khi gửi thành công
@@ -23,7 +27,7 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment }
         <div className="flex gap-3 items-start w-full max-w-3xl mt-4">
             {/* Ảnh Avatar của người đang đăng nhập */}
             <img 
-                src="https://i.imgur.com/1n7f1bF.jpg" // Avatar mặc định
+                src={user?.user_avatar || "https://i.imgur.com/1n7f1bF.jpg"}
                 alt="My Avatar" 
                 className="w-10 h-10 rounded-full object-cover shadow-sm"
             />
@@ -39,6 +43,8 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment }
                     placeholder={placeholder}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
+                    disabled={disabled}
+                    maxLength={1000}
                     className="w-full bg-transparent p-2 focus:outline-none text-gray-800 placeholder:text-gray-500"
                     autoComplete="off"
                 />
@@ -46,9 +52,9 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment }
                 {/* Nút Gửi (Chỉ sáng lên khi có chữ) */}
                 <button 
                     type="submit" 
-                    disabled={!comment.trim()} 
+                    disabled={!comment.trim() || disabled} 
                     className={`p-2 rounded-full transition duration-200 ${
-                        comment.trim() 
+                        comment.trim() && !disabled
                         ? 'text-sky-600 hover:bg-sky-100 cursor-pointer' 
                         : 'text-gray-400 cursor-not-allowed'
                     }`}

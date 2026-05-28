@@ -10,7 +10,7 @@ async function startServer() {
       console.log(`Backend running on http://localhost:${env.port}`);
     });
   } catch (error) {
-    console.error('Failed to start backend:', error.message);
+    console.error('Failed to start backend:', error);
     process.exit(1);
   }
 }

@@ -1,8 +1,8 @@
-import { getUserLogin } from "../../data/api";
+import { getCurrentUser } from "../../data/api";
 import toast from "react-hot-toast"; // Hiển thị thông báo hiện đại, đẹp mắt. Đừng dùng alert nữa :))
 
 const Profile = () => {
-    const user = getUserLogin();
+    const user = getCurrentUser();
     
     if (!user) {
         toast.error("Bạn cần đăng nhập để xem thông tin cá nhân!");
@@ -22,7 +22,7 @@ const Profile = () => {
                 <div className="absolute -top-16 left-8">
                     <div className="relative">
                         <img 
-                            src={user.avatar || "https://i.imgur.com/1n7f1bF.jpg"} 
+                            src={user.user_avatar || "https://i.imgur.com/1n7f1bF.jpg"} 
                             alt="User Avatar" 
                             className="h-32 w-32 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100"
                         />
@@ -31,28 +31,28 @@ const Profile = () => {
 
                 <div className="mt-14 pt-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">{user.username}</h2>
-                        <p className="text-sky-600 font-medium mt-1">{user.email}</p>
+                        <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">{user.user_name}</h2>
+                        <p className="text-sky-600 font-medium mt-1">{user.user_email}</p>
                     </div>
 
                     <div className="flex flex-col gap-3 bg-gray-50 px-6 py-4 rounded-xl border border-gray-100 min-w-[200px]">
                         <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Vai trò</span>
                             <span className="px-3 py-1 bg-sky-100 text-sky-700 text-sm font-bold rounded-full">
-                                {user.role}
+                                {user.user_role}
                             </span>
                         </div>
                         
 
                         <div className="flex justify-between items-center w-full">
                             <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Giới tính</span>
-                            {user.gender === "Nam" ? (
+                            {user.user_gender === "male" ? (
                                 <span className="flex items-center gap-2 text-blue-600 font-semibold text-sm">
-                                    {user.gender} <i className="fa-solid fa-mars text-lg"></i>
+                                    Nam <i className="fa-solid fa-mars text-lg"></i>
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-2 text-pink-600 font-semibold text-sm">
-                                    {user.gender} <i className="fa-solid fa-venus text-lg"></i>
+                                    {user.user_gender === "female" ? "Nữ" : "Khác"} <i className="fa-solid fa-venus text-lg"></i>
                                 </span>
                             )}
                         </div>

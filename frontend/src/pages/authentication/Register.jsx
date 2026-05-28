@@ -9,6 +9,8 @@ const Register = () => {
   const navigate = useNavigate();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [form, setForm] = useState({ username: "", email: "", password: "", confirmPassword: "" });
+  const [errors, setErrors] = useState({username: "", email: "", password: "", confirmPassword: ""});
+
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
@@ -27,9 +29,9 @@ const Register = () => {
     window.setTimeout(() => navigate("/login"), TRANSITION_MS);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = registerUser(form);
+    const result = await registerUser(form);
 
     setIsError(!result.ok);
     setMessage(result.message);
@@ -39,9 +41,37 @@ const Register = () => {
     }
   };
 
+  const handleValid = (e) => {
+    const { name, value } = e.target;
+    let errorMessage = "";
+
+    if (name === "username") {
+      if (value.length < 3) {
+        errorMessage = "Tên người dùng phải có ít nhất 3 ký tự";
+      }
+      else if (!/^[a-zA-Z]/.test(value)){
+        errorMessage = "Tên người dùng phải bắt đầu bằng ký tự chữ cái";
+      }
+    } else if (name === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        errorMessage = "Email không hợp lệ";
+      }
+    } else if (name === "password" && value.length < 6) {
+      errorMessage = "Mật khẩu phải có ít nhất 6 ký tự";
+    } else if (name === "confirmPassword" && value !== form.password) {
+      errorMessage = "Mật khẩu không khớp";
+    }
+
+    setErrors({...errors, [name]: errorMessage});
+};
+
   const handleChange = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+    setForm({ ...form, [name]: value });
+    // setForm({ ...form, [event.target.name]: event.target.value });
     if (message) setMessage("");
+    if (errors[name]) setErrors({...errors, [name]: ""});
   };
 
   return (
@@ -96,37 +126,46 @@ const Register = () => {
               name="username"
               value={form.username}
               onChange={handleChange}
+              onBlur={handleValid}
               placeholder="Tên người dùng"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
               required
+      
             />
+            {errors.username && <p className="text-red-600 text-sm">{errors.username}</p>}
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
+              onBlur={handleValid}
               placeholder="Email"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
               required
             />
+            {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
             <input
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
+              onBlur={handleValid}
               placeholder="Mật khẩu"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
               required
             />
+            {errors.password && <p className="text-red-600 text-sm">{errors.password}</p>}
             <input
               type="password"
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
+              onBlur={handleValid}
               placeholder="Nhập lại mật khẩu"
               className="placeholder:text-gray-500 border border-gray-300 rounded px-4 py-3 lg:py-2 focus:outline-none focus:border-sky-600 focus:ring-1 focus:ring-sky-600 transition"
               required
             />
+            {errors.confirmPassword && <p className="text-red-600 text-sm">{errors.confirmPassword}</p>}
 
             <button type="submit" className="bg-sky-600 text-white font-semibold py-3 lg:py-2 rounded shadow-md hover:bg-sky-700 hover:shadow-lg transition duration-300 ease-in-out">
               Đăng ký
