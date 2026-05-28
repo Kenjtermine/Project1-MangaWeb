@@ -1,0 +1,21 @@
+$kind: http-request
+name: Update User Access
+method: POST
+url: '{{baseUrl}}/api/auth/update-user-access'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": 1,
+      "isBanned": false,
+      "userRole": "user"
+    }
+order: 4000

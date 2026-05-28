@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Total Favorites
+method: GET
+url: '{{baseUrl}}/api/favorite/get-total-favorites/:mangaId'
+pathVariables:
+  - key: mangaId
+    value: '1'
+order: 3000

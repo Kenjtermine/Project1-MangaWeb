@@ -1,0 +1,20 @@
+$kind: http-request
+name: Toggle Favorite
+method: POST
+url: '{{baseUrl}}/api/favorite/toggle-favorite'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": 1,
+      "mangaId": 1
+    }
+order: 1000

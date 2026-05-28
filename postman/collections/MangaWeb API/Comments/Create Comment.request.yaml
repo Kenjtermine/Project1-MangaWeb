@@ -1,0 +1,23 @@
+$kind: http-request
+name: Create Comment
+method: POST
+url: '{{baseUrl}}/api/comments/create-comment'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": 1,
+      "chapterId": 1,
+      "content": "Great chapter!",
+      "parentCommentId": null,
+      "rootCommentId": null
+    }
+order: 2000

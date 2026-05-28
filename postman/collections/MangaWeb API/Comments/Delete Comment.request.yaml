@@ -1,0 +1,13 @@
+$kind: http-request
+name: Delete Comment
+method: POST
+url: '{{baseUrl}}/api/comments/delete-comment'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+queryParams:
+  - key: commentId
+    value: '1'
+order: 3000

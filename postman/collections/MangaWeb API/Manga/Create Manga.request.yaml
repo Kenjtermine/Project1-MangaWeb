@@ -1,0 +1,22 @@
+$kind: http-request
+name: Create Manga
+method: POST
+url: '{{baseUrl}}/api/manga'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "My Manga",
+      "author": "Author Name",
+      "summary": "A great story",
+      "coverImage": "https://example.com/cover.jpg"
+    }
+order: 1000

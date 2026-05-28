@@ -1,0 +1,21 @@
+$kind: http-request
+name: Toggle Comment Reaction
+method: POST
+url: '{{baseUrl}}/api/comments/reaction'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "commentId": 1,
+      "reactionType": "like",
+      "userId": 1
+    }
+order: 4000

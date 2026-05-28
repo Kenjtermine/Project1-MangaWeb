@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Rating Stats
+method: GET
+url: '{{baseUrl}}/api/rating/get-rating-stats/:mangaId'
+pathVariables:
+  - key: mangaId
+    value: '1'
+order: 2000
