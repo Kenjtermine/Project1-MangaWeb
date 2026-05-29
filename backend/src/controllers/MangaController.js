@@ -6,8 +6,7 @@ const generateSlug = (title) => {
 
 async function createManga(req, res, next) {
   try {
-    const { title, author, summary } = req.body;
-    const coverImage = req.file ? req.file.path : '';
+    const { title, author, summary, coverImage } = req.body;
 
     if (!title || !author) {
       return res.status(400).json({ message: 'Title and Author are required' });
@@ -15,7 +14,6 @@ async function createManga(req, res, next) {
 
     const slug = generateSlug(title);
     const status = 'ongoing'; 
-
     const insertResult = await db.query(
       `
         INSERT INTO manga (
@@ -29,18 +27,17 @@ async function createManga(req, res, next) {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `,
-      [title, slug, author, summary || '', coverImage, status]
+      [title, slug, author, summary || '', coverImage || '', status]
     );
 
     const newManga = insertResult.rows[0];
 
     return res.status(201).json({ 
-      message: 'Thêm truyện thành công!',
+      message: 'Thêm truyện thành công, đang chờ Admin duyệt!',
       manga: newManga 
     });
 
   } catch (error) {
-    console.error("Lỗi lưu truyện:", error);
     return next(error);
   }
 }

@@ -641,24 +641,6 @@ export const deleteComment = async (commentId) => {
   }
 }
 
-<<<<<<< Updated upstream
-export const createNewManga = async (mangaData) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const currentUser = JSON.parse(localStorage.getItem('currentUserId')); 
-      const posterName = currentUser ? currentUser.username : "nyancat";
-      const existingMangas = JSON.parse(localStorage.getItem('mangas')) || [];
-
-      const newComic = {
-        id: Date.now(), 
-        ...mangaData,
-        poster_username: posterName, 
-        coverImage: mangaData.coverImage || "https://i.imgur.com/3n7f1bF.jpg", 
-        status: "Đang tiến hành"
-      };
-      existingMangas.push(newComic);
-      localStorage.setItem('mangas', JSON.stringify(existingMangas));
-=======
 export const createNewManga = async (payload) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/mangas`, {
@@ -667,7 +649,6 @@ export const createNewManga = async (payload) => {
     });
 
     const data = await response.json();
->>>>>>> Stashed changes
 
     if (!response.ok) {
       throw new Error(data.message || 'Lỗi server');
