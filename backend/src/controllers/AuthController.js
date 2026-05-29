@@ -88,7 +88,17 @@ async function refreshAccessToken(req, res, next) {
       return res.status(404).json({ message: 'Người dùng không tồn tại' });
     }
 
-    const newAccessToken = generateAccessToken(user.rows[0]);
+    const foundUser = user.rows[0];
+
+    if (foundUser.refresh_token !== refreshToken) {
+      return res.status(401).json({ message: 'Refresh token khong hop le hoac da het han' });
+    }
+
+    if (foundUser.is_banned) {
+      return res.status(403).json({ message: 'Tai khoan nay dang bi khoa.' });
+    }
+
+    const newAccessToken = generateAccessToken(foundUser);
 
     return res.status(200).json({
       message: 'Token đã được cập nhật',
@@ -166,9 +176,19 @@ async function register(req, res, next) {
     );
 
     const user = newUser.rows[0];
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await db.query(
+      'UPDATE users SET refresh_token = $1 WHERE user_id = $2',
+      [refreshToken, user.user_id]
+    );
 
     return res.status(201).json({
       message: 'Đăng ký thành công.',
+      accessToken,
+      refreshToken,
+      expiresIn: jwtConfig.EXPIRES_IN,
       user: toPublicUser(user)
     });
   } catch (error) {
@@ -179,16 +199,33 @@ async function register(req, res, next) {
 async function updateUserAccess(req, res, next) {
   try {
     const { userId, isBanned, userRole } = req.body;
-    if (!userId) return res.status(400).json({ message: 'User ID is required' });
+    const currentUser = req.user;
+
+    if (!currentUser?.user_id) {
+      return res.status(401).json({ message: 'Login is required' });
+    }
+
+    const isAdmin = currentUser.user_role === 'admin';
+    const targetUserId = isAdmin && userId ? Number(userId) : Number(currentUser.user_id);
 
     // Ít nhất một trường phải có
-    if (!isBanned && !userRole) {
+    if (isBanned === undefined && userRole === undefined) {
       return res.status(400).json({ message: 'At least one field are required' });
+    }
+
+    if (!isAdmin) {
+      if (isBanned !== undefined) {
+        return res.status(403).json({ message: 'You are not allowed to change ban status' });
+      }
+
+      if (userRole && userRole !== 'uploader') {
+        return res.status(403).json({ message: 'You are not allowed to assign this role' });
+      }
     }
 
     const user = await db.query(
       'SELECT * FROM users WHERE user_id = $1',
-      [userId]
+      [targetUserId]
     );
 
     if (user.rows.length === 0) {
@@ -203,7 +240,7 @@ async function updateUserAccess(req, res, next) {
           user_role = COALESCE($2, user_role) 
       WHERE user_id = $3 
       RETURNING *`,
-      [isBannedParam, userRoleParam, userId]
+      [isBannedParam, userRoleParam, targetUserId]
     );
 
     return res.status(200).json({

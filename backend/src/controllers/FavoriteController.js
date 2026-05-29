@@ -1,7 +1,8 @@
 const db = require('../config/db');
 
 async function toggleFavorite(req, res) {
-    const { userId, mangaId } = req.body;
+    const userId = req.user?.user_id;
+    const { mangaId } = req.body;
 
     if (!userId || !mangaId) {
         return res.status(400).json({ message: 'Thiếu userId hoặc mangaId' });
@@ -39,7 +40,8 @@ async function toggleFavorite(req, res) {
  * 2. KIỂM TRA TRẠNG THÁI TIM (Dùng để tô màu icon trái tim khi load trang)
  */
 async function checkIsFavorited(req, res) {
-    const { userId, mangaId } = req.query; 
+    const userId = req.user?.user_id;
+    const { mangaId } = req.query; 
 
     if (!userId || !mangaId) return res.status(400).json({ message: 'Thiếu thông tin' });
 
@@ -81,7 +83,7 @@ async function getTotalFavorites(req, res) {
  * 4. LẤY DANH SÁCH TRUYỆN TỦ CỦA USER (Hiển thị ở trang Profile)
  */
 async function getUserFavorites(req, res) {
-    const { userId } = req.params;
+    const userId = req.user?.user_id;
 
     if (!userId) return res.status(400).json({ message: 'Thiếu userId' });
 

@@ -10,6 +10,8 @@ const commentRoutes = require('./routes/comment.routes');
 const authRoutes = require('./routes/auth.routes');
 const favoriteRoutes = require('./routes/favorite.routes');
 const ratingRoutes = require('./routes/rating.routes');
+const nofiticationRoutes = require('./routes/nofitication.routes');
+require('./services/nofitication.service');
 
 const app = express();
 
@@ -24,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/favorite', favoriteRoutes);
 app.use('/api/rating', ratingRoutes);
+app.use('/api/nofitication', nofiticationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

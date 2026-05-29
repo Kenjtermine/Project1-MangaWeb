@@ -42,10 +42,10 @@ const Comment = ({ commentData, currentUser, onSubmitReply, onDelete }) => {
             rootCommentId: commentData.root_comment_id || commentData.comment_id,
         });
 
-        setReplyMessage(result?.message || "");
-
         if (result?.ok) {
             setIsReplying(false); // Sẽ chạy đúng và đóng form lại
+        } else if (result?.message) {
+            setReplyMessage(result.message);
         }
 
         return result;
