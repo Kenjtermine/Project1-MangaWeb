@@ -7,10 +7,10 @@ const CreatorDashboard = () => {
   const [myMangas, setMyMangas] = useState([]); 
 
   useEffect(() => {
-    if (user?.user_role === "uploader") {
+    if (user?.user_role === "poster") {
       const savedMangas = JSON.parse(localStorage.getItem('mangas')) || [];
       
-      const filtered = savedMangas.filter(m => m.uploader_username === user.username);
+      const filtered = savedMangas.filter(m => m.poster_username === user.username);
       
       // 3. Cập nhật vào giao diện
       setMyMangas(filtered);
@@ -29,7 +29,7 @@ const CreatorDashboard = () => {
     }
   };
 
-  if (user && user.user_role !== "uploader" ) {
+  if (user && user.user_role !== "poster" ) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-10 bg-gray-50 min-h-screen">
         <div className="max-w-xl bg-white p-10 rounded-2xl shadow-xl text-center">
