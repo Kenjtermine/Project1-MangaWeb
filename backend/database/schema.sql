@@ -21,6 +21,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'user', 'uploader');
 CREATE TYPE manga_status AS ENUM ('ongoing', 'completed', 'hiatus', 'cancelled');
 CREATE TYPE library_status AS ENUM ('following', 'completed', 'dropped', 'plan_to_read');
 CREATE TYPE reaction_type AS ENUM ('like', 'dislike');
+CREATE TYPE nofitication_type AS ENUM('NEW_CHAPTER', 'SYSTEM_ALERT', 'REPLY_COMMENT');
 
 -- =========================================================
 -- MODULE 1: USERS & AUTH
@@ -175,11 +176,14 @@ CREATE TABLE notifications (
   notification_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   
-  title VARCHAR(255) NOT NULL,
+  type nofitication_type NOT NULL,
   content TEXT NOT NULL,
+  target_url VARCHAR(255),
   is_read BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
 -- =========================================================
 -- MODULE 4: PERSONALIZATION (FAVORITE / LIBRARY / HISTORY)
 -- =========================================================

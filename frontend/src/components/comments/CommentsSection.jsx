@@ -54,6 +54,8 @@ const CommentsSection = ({ chapterId }) => {
         if (result.ok) {
             await fetchComments();
         }
+
+        return result;
     };
     const handleDeleteComment = async (commentId) => {
         const result = await deleteComment(commentId);

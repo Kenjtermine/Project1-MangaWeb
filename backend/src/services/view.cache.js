@@ -11,18 +11,14 @@ const incrementView = (mangaId) => {
     }
 };
 
-// 3. Hàm CRONJOB: Hốt trọn mẻ lưới mang xuống Database
-// Chạy hàm này tự động ngầm bên dưới
 const flushViewsToDB = async (db) => {
     if (viewCache.size === 0) return; // Không có ai xem thì thôi
 
-    // Copy data ra và xóa cache hiện tại để hứng view mới ngay lập tức
     const viewsToUpdate = new Map(viewCache);
     viewCache.clear();
 
     console.log(`Đang lưu view cho ${viewsToUpdate.size} bộ truyện xuống DB...`);
 
-    // Chạy vòng lặp lưu xuống Postgres
     try {
         for (const [mangaId, views] of viewsToUpdate.entries()) {
             await db.query(
@@ -33,7 +29,6 @@ const flushViewsToDB = async (db) => {
         console.log('Lưu view thành công!');
     } catch (error) {
         console.error('Lỗi khi lưu view ngầm:', error);
-        // Mẹo: Nếu lỗi, đổ số view lại vào cache để tí lưu lại, không bị mất view của tác giả!
         for (const [mangaId, views] of viewsToUpdate.entries()) {
             incrementView(mangaId); 
         }

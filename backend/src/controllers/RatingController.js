@@ -2,14 +2,15 @@ const db = require('../config/db');
 
 
 async function submitRating(req, res, next) {
-    const { userId, mangaId, rating_score} = req.body;
+    const userId = req.user?.user_id;
+    const { mangaId, rating_score} = req.body;
     if (!userId) return res.status(401).json({ message: 'Login is required' });
     if (!mangaId) return res.status(400).json({ message: 'mangaId is required' });
     if (!rating_score) return res.status(400).json({ message: 'rating_score is required' });
-    query_submit_rating = `INSERT INTO ratings (user_id, manga_id, score)
+    const query_submit_rating = `INSERT INTO ratings (user_id, manga_id, score)
     VALUES ($1, $2, $3)
     RETURNING *`;
-    query_update_rating_stats= `
+    const query_update_rating_stats= `
     UPDATE manga
     SET 
         avg_rating = ( SELECT AVG(score) FROM ratings WHERE manga_id = $1),

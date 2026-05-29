@@ -1,16 +1,31 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import GenreList from "../genre-list/GenreList";
 import useClickOutside from "../../hooks/useClickOutside";
 
-import { getCurrentUser, getUserNotification, logoutUser } from "../../data/api"; 
+import { getCurrentUser, getUserNotification, getUnreadNotificationCount, logoutUser } from "../../data/api"; 
 
 const Sidebar = () => {
     const user = getCurrentUser();
     const isUploader = user?.user_role?.toLowerCase() === "uploader";
-    const notificationCount = getUserNotification().filter(noti => noti.is_read === false).length; // Lấy số lượng thông báo chưa đọc
+    const [notificationCount, setNotificationCount] = useState(0);
     const [isGenreOpen, setIsGenreOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchNotificationCount = async () => {
+            try {
+                const count = await getUnreadNotificationCount();
+                setNotificationCount(count || 0);
+            } catch (error) {
+                console.error("Failed to fetch notification count:", error);
+            }
+        };
+
+        if (user) {
+            fetchNotificationCount();
+        }
+    }, [user]);
     // Sử dụng hook: Truyền vào một hàm để đóng popup
     // domNode trả về sẽ được dùng làm mốc (ref)
     const genreRef = useClickOutside(() => {

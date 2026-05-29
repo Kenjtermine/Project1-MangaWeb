@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const eventBus = require('../utils/eventBus');
 
 async function getComments(req, res, next) {
   try {
@@ -40,8 +41,8 @@ async function getComments(req, res, next) {
 
 async function createComment(req, res, next) {
   try {
+    const userId = req.user?.user_id; // Get userId from token
     const {
-      userId,
       chapterId,
       content,
       parentCommentId = null,
@@ -88,6 +89,35 @@ async function createComment(req, res, next) {
       comment.root_comment_id = comment.comment_id;
     }
 
+    // if comment is a reply, nofity the parent comment's author
+    if (parentCommentId) {
+      try {
+        const parentInfoResult = await db.query(`
+          SELECT 
+            c.user_id AS receiver_id, 
+            ch.manga_id 
+          FROM comments c
+          JOIN chapters ch ON c.chapter_id = ch.chapter_id
+          WHERE c.comment_id = $1
+        `, [Number(parentCommentId)]);
+
+        if (parentInfoResult.rows.length > 0) {
+          const { receiver_id, manga_id } = parentInfoResult.rows[0];
+
+          // Không gửi thông báo nếu user tự trả lời comment của chính mình
+          if (receiver_id !== Number(userId)) {
+            eventBus.emit('REPLY_COMMENT', {
+              receiverId: receiver_id,
+              message: `Đã trả lời bình luận của bạn: ${normalizedContent.substring(0, 50)}${normalizedContent.length > 50 ? '...' : ''}`, // Rút gọn text tránh tràn UI
+              targetUrl: `/manga/${manga_id}/chapter/${chapterId}` 
+            });
+          }
+        }
+      } catch (notiError) {
+        console.error('Lỗi khi truy xuất dữ liệu để bắn thông báo:', notiError);
+      }
+    }
+      
     return res.status(201).json({ comment });
   } catch (error) {
     return next(error);
@@ -96,9 +126,13 @@ async function createComment(req, res, next) {
 
 async function deleteComment(req, res, next) {
   try {
-    const commentId = Number(req.query.commentId);
+    const userId = req.user?.user_id;
+    const userRole = req.user?.user_role;
+    const { commentId } = req.body;
+    const commentIdNum = Number(commentId);
 
-    if (!Number.isInteger(commentId) || commentId <= 0) {
+    if (!userId) return res.status(401).json({ message: 'Login is required' });
+    if (!Number.isInteger(commentIdNum) || commentIdNum <= 0) {
       return res.status(400).json({ message: 'commentId is invalid' });
     }
 
@@ -107,11 +141,17 @@ async function deleteComment(req, res, next) {
         UPDATE comments
         SET is_deleted = true
         WHERE comment_id = $1
+          AND (user_id = $2 OR $3 = 'admin')
+        RETURNING comment_id
       `,
-      [commentId]
+      [commentIdNum, Number(userId), userRole]
     );
 
-    return res.json({ message: 'Comment deleted successfully' });
+    if (result.rowCount === 0) {
+      return res.status(403).json({ message: 'You are not allowed to delete this comment' });
+    }
+
+    return res.json({ message: 'Comment deleted successfully', data: { commentId: commentIdNum } });
   } catch (error) {
     return next(error);
   }
@@ -120,13 +160,20 @@ async function deleteComment(req, res, next) {
 async function toggleCommentReaction(req, res, next) {
   try {
     // 1. Lấy userId từ token (bảo mật) và data từ body
-    const { commentId, reactionType, userId } = req.body; // reactionType chỉ nhận 'like' hoặc 'dislike'
+    const userId = req.user?.user_id; // Get userId from token
+    const commentIdNum = Number(req.body.commentId);
+    const { commentId, reactionType } = req.body; // reactionType chỉ nhận 'like' hoặc 'dislike'
 
+    if (!userId) return res.status(401).json({ message: 'Login is required' });
     if (!['like', 'dislike'].includes(reactionType)) {
         return res.status(400).json({ message: "Loại reaction không hợp lệ" });
     }
 
     // 2. TĂNG/GIẢM TRỰC TIẾP TRÊN DATABASE MÀ KHÔNG CẦN FRONTEND GỬI SỐ LƯỢNG
+    if (!Number.isInteger(commentIdNum) || commentIdNum <= 0) {
+        return res.status(400).json({ message: "commentId is invalid" });
+    }
+
     let updateQuery = "";
     if (reactionType === 'like') {
         updateQuery = 'UPDATE comments SET like_count = like_count + 1 WHERE comment_id = $1 RETURNING *';
@@ -134,7 +181,7 @@ async function toggleCommentReaction(req, res, next) {
         updateQuery = 'UPDATE comments SET dislike_count = dislike_count + 1 WHERE comment_id = $1 RETURNING *';
     }
 
-    const result = await db.query(updateQuery, [commentId]);
+    const result = await db.query(updateQuery, [commentIdNum]);
 
     if (result.rows.length === 0) {
         return res.status(404).json({ message: "Không tìm thấy bình luận" });

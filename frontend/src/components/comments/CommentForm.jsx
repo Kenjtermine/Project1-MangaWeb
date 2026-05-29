@@ -7,7 +7,7 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment, 
     const user = getCurrentUser();
 
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
         // Ngăn người dùng gửi bình luận trống (toàn dấu cách)
@@ -15,7 +15,7 @@ const CommentForm = ({ placeholder = "Viết bình luận...", onSubmitComment, 
 
         // Gửi dữ liệu ra component cha (nếu có)
         if (onSubmitComment) {
-            const result = onSubmitComment(comment);
+            const result = await onSubmitComment(comment);
             if (result?.ok === false) return;
         }
         

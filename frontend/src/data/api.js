@@ -4,6 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000
 
 const STORAGE_KEYS = {
   authToken: "authToken",
+  refreshToken: "refreshToken",
   currentUser: "currentUser",
   favorites: "mockFavorites",
   history: "mockReadingHistory",
@@ -31,24 +32,48 @@ const removeStorage = (key) => {
 const normalizeText = (value = "") => value.toString().trim().toLowerCase();
 
 const request = async (path, options = {}) => {
+  const { skipAuthRefresh = false, headers: optionHeaders = {}, ...fetchOptions } = options;
   const token = getAuthToken();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
   
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
+      ...fetchOptions,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options.headers || {}),
+        ...optionHeaders,
       },
     });
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
+      const canRefresh = !skipAuthRefresh && [401, 403].includes(response.status) && getRefreshToken();
+      if (canRefresh) {
+        const newAccessToken = await refreshStoredAccessToken().catch(() => null);
+        if (newAccessToken) {
+          const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+            ...fetchOptions,
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${newAccessToken}`,
+              ...optionHeaders,
+            },
+          });
+
+          const retryData = await retryResponse.json().catch(() => ({}));
+          if (!retryResponse.ok) {
+            throw new Error(retryData.message || "Request failed");
+          }
+
+          return retryData;
+        }
+      }
+
       throw new Error(data.message || "Request failed");
     }
 
@@ -63,6 +88,7 @@ const getHistory = () => readStorage(STORAGE_KEYS.history, mockData.reading_hist
 const getNotifications = () => readStorage(STORAGE_KEYS.notifications, mockData.notifications);
 
 export const getAuthToken = () => localStorage.getItem(STORAGE_KEYS.authToken);
+export const getRefreshToken = () => localStorage.getItem(STORAGE_KEYS.refreshToken);
 
 export const getCurrentUser = () => readStorage(STORAGE_KEYS.currentUser, null);
 
@@ -73,13 +99,31 @@ export const getCurrentUserId = () => {
 
 export const logoutUser = () => {
   removeStorage(STORAGE_KEYS.authToken);
+  removeStorage(STORAGE_KEYS.refreshToken);
   removeStorage(STORAGE_KEYS.currentUser);
 };
 
-const saveAuth = ({ user, token }) => {
-  if (token) localStorage.setItem(STORAGE_KEYS.authToken, token);
+const saveAuth = ({ user, token, accessToken, refreshToken }) => {
+  const nextAccessToken = accessToken || token;
+  if (nextAccessToken) localStorage.setItem(STORAGE_KEYS.authToken, nextAccessToken);
+  if (refreshToken) localStorage.setItem(STORAGE_KEYS.refreshToken, refreshToken);
   if (user) writeStorage(STORAGE_KEYS.currentUser, user);
   return user || null;
+};
+
+const refreshStoredAccessToken = async () => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+
+  const data = await request("/api/auth/refresh-token", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+    skipAuthRefresh: true,
+  });
+
+  if (!data.accessToken) return null;
+  localStorage.setItem(STORAGE_KEYS.authToken, data.accessToken);
+  return data.accessToken;
 };
 
 export const loginUser = async ({ username, email, password }) => {
@@ -91,7 +135,7 @@ export const loginUser = async ({ username, email, password }) => {
       body: JSON.stringify({ username: loginName, email: loginName, password }),
     });
 
-    const user = saveAuth({ user: data.user, token: data.token });
+    const user = saveAuth({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken });
     return { ok: true, user, message: "Đăng nhập thành công." };
   } catch (error) {
     return { ok: false, message: error.message || "Đăng nhập thất bại." };
@@ -109,7 +153,7 @@ export const registerUser = async ({ username, email, password, confirmPassword 
       body: JSON.stringify({ username, email, password, confirmPassword }),
     });
 
-    const user = saveAuth({ user: data.user, token: data.token });
+    const user = saveAuth({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken });
     return { ok: true, user, message: "Đăng ký thành công." };
   } catch (error) {
     return { ok: false, message: error.message || "Đăng ký thất bại." };
@@ -220,33 +264,78 @@ export const getRankingMangas = (limit = 10) => {
     .slice(0, limit);
 };
 
-export const getUserNotification = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return [];
-
-  return getNotifications()
-    .filter((noti) => noti.user_id === userId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+// Real API functions for notifications
+export const getUserNotification = async () => {
+  try {
+    const data = await request("/api/nofitication/notifications", {
+      method: "GET",
+    });
+    return data.data || [];
+  } catch (error) {
+    console.error("Failed to fetch notifications:", error);
+    // Fallback to mock data
+    const userId = getCurrentUserId();
+    if (!userId) return [];
+    return getNotifications()
+      .filter((noti) => noti.user_id === userId)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
 };
 
-export const markAllNotificationsRead = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return [];
-
-  const nextNotifications = getNotifications().map((noti) =>
-    noti.user_id === userId ? { ...noti, is_read: true } : noti
-  );
-  writeStorage(STORAGE_KEYS.notifications, nextNotifications);
-  return getUserNotification();
+export const markAllNotificationsRead = async () => {
+  try {
+    const data = await request("/api/nofitication/notifications/all-read", {
+      method: "POST",
+    });
+    return data.data || [];
+  } catch (error) {
+    console.error("Failed to mark all as read:", error);
+    // Fallback to mock
+    const userId = getCurrentUserId();
+    if (!userId) return [];
+    const nextNotifications = getNotifications().map((noti) =>
+      noti.user_id === userId ? { ...noti, is_read: true } : noti
+    );
+    writeStorage(STORAGE_KEYS.notifications, nextNotifications);
+    return getUserNotification();
+  }
 };
 
-export const clearUserNotifications = () => {
-  const userId = getCurrentUserId();
-  if (!userId) return [];
+export const markNotificationAsRead = async (notificationId) => {
+  try {
+    const data = await request("/api/nofitication/notifications/read", {
+      method: "POST",
+      body: JSON.stringify({ notificationId }),
+    });
+    return data.data || null;
+  } catch (error) {
+    console.error("Failed to mark notification as read:", error);
+    throw error;
+  }
+};
 
-  const nextNotifications = getNotifications().filter((noti) => noti.user_id !== userId);
-  writeStorage(STORAGE_KEYS.notifications, nextNotifications);
-  return [];
+export const getUnreadNotificationCount = async () => {
+  try {
+    const data = await request("/api/nofitication/notifications/unread-count", {
+      method: "GET",
+    });
+    return data.data?.count || 0;
+  } catch (error) {
+    console.error("Failed to fetch unread count:", error);
+    return 0;
+  }
+};
+
+export const clearUserNotifications = async () => {
+  try {
+    const data = await request("/api/nofitication/notifications/delete-readed", {
+      method: "DELETE",
+    });
+    return data.data || null;
+  } catch (error) {
+    console.error("Failed to clear notifications:", error);
+    throw error;
+  }
 };
 
 // Favorite APIs
@@ -255,7 +344,7 @@ export const getUserFavorites = async () => {
   if (!userId) return [];
 
   try {
-    const data = await request(`/api/favorite/get-user-favorites/${userId}`, {
+    const data = await request('/api/favorite/get-user-favorites', {
       method: 'GET'
     });
     return data.favorites || [];
@@ -270,7 +359,7 @@ export const isFavoriteManga = async (mangaId) => {
   if (!userId) return false;
 
   try {
-    const data = await request(`/api/favorite/check-is-favorited?userId=${userId}&mangaId=${Number(mangaId)}`, {
+    const data = await request(`/api/favorite/check-is-favorited?mangaId=${Number(mangaId)}`, {
       method: 'GET'
     });
     return data.isFavorited;
@@ -287,7 +376,7 @@ export const toggleFavoriteManga = async (mangaId) => {
   try {
     const data = await request('/api/favorite/toggle-favorite', {
       method: 'POST',
-      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+      body: JSON.stringify({ mangaId: Number(mangaId) })
     });
 
     return {
@@ -307,7 +396,7 @@ export const removeFavoriteManga = async (mangaId) => {
   try {
     const data = await request('/api/favorite/toggle-favorite', {
       method: 'POST',
-      body: JSON.stringify({ userId, mangaId: Number(mangaId) })
+      body: JSON.stringify({ mangaId: Number(mangaId) })
     });
 
     return { ok: true, isFavorite: false, message: data.message };
@@ -443,16 +532,15 @@ export const getComments = async (chapterId = 1) => {
 
 export const submitComment = async ({ chapterId, content, parentCommentId = null, rootCommentId = null }) => {
   try {
-    const user = getCurrentUser(); // Lấy user từ LocalStorage
+    const token = getAuthToken();
     
-    if (!user) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
+    if (!token) return { ok: false, message: "Bạn cần đăng nhập để bình luận." };
     if (!content?.trim()) return { ok: false, message: "Nội dung bình luận không được để trống." };
 
     // Bắn request xuống Backend Node.js
     const data = await request("/api/comments/create-comment", {
       method: "POST",
       body: JSON.stringify({
-        userId: user.user_id, // Gửi kèm userId
         chapterId,
         content,
         parentCommentId,
@@ -463,7 +551,7 @@ export const submitComment = async ({ chapterId, content, parentCommentId = null
     // Trả kết quả về cho CommentsSection.jsx xử lý (hiện thông báo, load lại bình luận)
     return {
       ok: true,
-      message: "Đã gửi bình luận.",
+      message: "Đã gửi bình luận thành công!",
       comment: data.comment, // Trả về object comment vừa được tạo từ DB
     };
 
@@ -474,14 +562,13 @@ export const submitComment = async ({ chapterId, content, parentCommentId = null
 
 export const toggleReaction = async ({ commentId, reaction }) => {
   try {
-    const user = getCurrentUser(); // Lấy user từ LocalStorage
-    if (!user) return { ok: false, message: "Bạn cần đăng nhập để thả biểu cảm." };
+    const token = getAuthToken();
+    if (!token) return { ok: false, message: "Bạn cần đăng nhập để thả biểu cảm." };
 
     // Bắn thẳng hành động (reaction) xuống Backend
     const data = await request("/api/comments/reaction", {
       method: "POST",
       body: JSON.stringify({ 
-        userId: user.user_id,
         commentId: commentId,
         reactionType: reaction // 'like' hoặc 'dislike'
       }),
@@ -489,7 +576,7 @@ export const toggleReaction = async ({ commentId, reaction }) => {
 
     return { 
         ok: true, 
-        message: "Reaction thành công.", 
+        message: "Thao tác thành công!", 
         comment: data.comment // Data mới nhất từ DB
     };
 
@@ -524,7 +611,7 @@ export const submitRating = async (mangaId, ratingScore) => {
   try {
     const data = await request('/api/rating/submit-rating', {
       method: 'POST',
-      body: JSON.stringify({ userId, mangaId: Number(mangaId), rating_score: Number(ratingScore) })
+      body: JSON.stringify({ mangaId: Number(mangaId), rating_score: Number(ratingScore) })
     });
 
     return {
@@ -538,8 +625,8 @@ export const submitRating = async (mangaId, ratingScore) => {
 
 export const deleteComment = async (commentId) => {
   try {
-    const currentUserId = getCurrentUserId();
-    if (!currentUserId) return { ok: false, message: "Bạn cần đăng nhập." };
+    const token = getAuthToken();
+    if (!token) return { ok: false, message: "Bạn cần đăng nhập." };
     
     // Bắn request xuống Backend Node.js
     await request("/api/comments/delete-comment", {
@@ -547,6 +634,7 @@ export const deleteComment = async (commentId) => {
       body: JSON.stringify({ commentId }),
     });
 
+    return { ok: true, message: "Xóa bình luận thành công." };
   }
   catch (error) {
     return { ok: false, message: error.message || "Có lỗi xảy ra khi xóa bình luận." };
@@ -598,10 +686,10 @@ export const becomeUploader = async () => {
     
     const becomesUploader = await request("/api/auth/update-user-access", {
       method: "POST",
-      body: JSON.stringify({ userId: user.user_id, isBanned: false, userRole: "uploader" }),
+      body: JSON.stringify({ userRole: "uploader" }),
     });
 
-    const updatedUser = { ...user, user_role: "uploader" };
+    const updatedUser = becomesUploader.user || { ...user, user_role: "uploader" };
     writeStorage(STORAGE_KEYS.currentUser, updatedUser);
     
     return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
