@@ -37,17 +37,24 @@ const AddComic = () => {
     setError('');
     setSuccess('Đang xử lý...');
     
-    console.log("=== DỮ LIỆU CHUẨN BỊ GỬI LÊN SERVER ===");
-    console.log("Thông tin:", formData);
+    const payload = new FormData();
+    payload.append('title', formData.title);
+    payload.append('author', formData.author);
+    payload.append('summary', formData.description); 
+    payload.append('category', formData.category);
     
-    const res = await createNewManga(formData);
+    if (coverImage) {
+      payload.append('coverImage', coverImage);
+    }
+    
+    const res = await createNewManga(payload);
     
     if (res.ok) {
       setSuccess('Thêm truyện thành công! Mời bạn quay lại Studio để kiểm tra.');
       setFormData({ title: '', author: '', description: '', category: '' });
       setCoverImage(null);
     } else {
-      setError('Lưu truyện thất bại, vui lòng thử lại.');
+      setError(res.message || 'Lưu truyện thất bại, vui lòng thử lại.');
     }
   };
 

@@ -641,6 +641,7 @@ export const deleteComment = async (commentId) => {
   }
 }
 
+<<<<<<< Updated upstream
 export const createNewManga = async (mangaData) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -657,15 +658,30 @@ export const createNewManga = async (mangaData) => {
       };
       existingMangas.push(newComic);
       localStorage.setItem('mangas', JSON.stringify(existingMangas));
+=======
+export const createNewManga = async (payload) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas`, {
+      method: 'POST',
+      body: payload, 
+    });
 
-      console.log(" Đã lưu truyện vào LocalStorage:", newComic);
-      resolve({ 
-        ok: true, 
-        message: "Thêm truyện thành công!", 
-        manga: newComic 
-      });
-    }, 1500);
-  });
+    const data = await response.json();
+>>>>>>> Stashed changes
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi server');
+    }
+
+    return { 
+      ok: true, 
+      message: "Thêm truyện thành công!", 
+      manga: data.manga 
+    };
+  } catch (error) {
+    console.error("Lỗi khi gọi API createNewManga:", error);
+    return { ok: false, message: error.message };
+  }
 };
 // frontend/src/data/api.js
 
