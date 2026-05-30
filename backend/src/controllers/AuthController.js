@@ -251,6 +251,50 @@ async function updateUserAccess(req, res, next) {
     next(error);
   }
 }
+
+async function banUser(req, res, next) {
+  try {
+    const { userId } = req.body;
+    const currentUser = req.user;
+
+    if (!currentUser?.user_id) {
+      return res.status(401).json({ message: 'Login is required' });
+    }
+
+    const isAdmin = currentUser.user_role === 'admin';
+    if (!isAdmin) {
+      return res.status(403).json({ message: 'You are not allowed to ban user' });
+    }
+
+    const targetUserId = Number(userId);
+
+    const user = await db.query(
+      'SELECT * FROM users WHERE user_id = $1',
+      [targetUserId]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updatedUser = await db.query(
+      `UPDATE users 
+      SET is_banned = true 
+      WHERE user_id = $1 
+      RETURNING *`,
+      [targetUserId]
+    );
+
+    return res.status(200).json({
+      message: 'Đã cập nhật thông tin người dùng.',
+      user: toPublicUser(updatedUser.rows[0])
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 module.exports = {
   login,
   register,
