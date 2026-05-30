@@ -17,7 +17,7 @@ CREATE DATABASE mangaweb;
 -- =========================================================
 
 CREATE TYPE user_gender AS ENUM ('male', 'female', 'other');
-CREATE TYPE user_role AS ENUM ('admin', 'user', 'uploader');
+CREATE TYPE user_role AS ENUM ('admin', 'user', 'poster');
 CREATE TYPE manga_status AS ENUM ('ongoing', 'completed', 'hiatus', 'cancelled');
 CREATE TYPE library_status AS ENUM ('following', 'completed', 'dropped', 'plan_to_read');
 CREATE TYPE reaction_type AS ENUM ('like', 'dislike');

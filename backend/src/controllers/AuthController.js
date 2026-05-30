@@ -218,7 +218,7 @@ async function updateUserAccess(req, res, next) {
         return res.status(403).json({ message: 'You are not allowed to change ban status' });
       }
 
-      if (userRole && userRole !== 'uploader') {
+      if (userRole && userRole !== 'poster' && userRole !== 'poster') {
         return res.status(403).json({ message: 'You are not allowed to assign this role' });
       }
     }
@@ -232,7 +232,7 @@ async function updateUserAccess(req, res, next) {
       return res.status(404).json({ message: 'User not found' });
     }
     const isBannedParam = isBanned !== undefined ? isBanned : null;
-    const userRoleParam = userRole !== undefined ? userRole : null;
+    const userRoleParam = userRole !== undefined ? 'poster' : null;
 
     const updatedUser = await db.query(
       `UPDATE users 

@@ -8,7 +8,7 @@ import { getCurrentUser, getUserNotification, getUnreadNotificationCount, logout
 
 const Sidebar = () => {
     const user = getCurrentUser();
-    const isUploader = user?.user_role?.toLowerCase() === "uploader";
+    const isUploader = user?.user_role?.toLowerCase() === "poster";
     const [notificationCount, setNotificationCount] = useState(0);
     const [isGenreOpen, setIsGenreOpen] = useState(false);
 
