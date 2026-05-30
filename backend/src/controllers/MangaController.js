@@ -13,7 +13,7 @@ async function createManga(req, res, next) {
     }
 
     const slug = generateSlug(title);
-    const status = 'pending'; 
+    const status = 'ongoing'; 
     const insertResult = await db.query(
       `
         INSERT INTO manga (

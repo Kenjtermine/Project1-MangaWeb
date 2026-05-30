@@ -641,31 +641,28 @@ export const deleteComment = async (commentId) => {
   }
 }
 
-export const createNewManga = async (mangaData) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const currentUser = JSON.parse(localStorage.getItem('currentUserId')); 
-      const uploaderName = currentUser ? currentUser.username : "nyancat";
-      const existingMangas = JSON.parse(localStorage.getItem('mangas')) || [];
+export const createNewManga = async (payload) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas`, {
+      method: 'POST',
+      body: payload, 
+    });
 
-      const newComic = {
-        id: Date.now(), 
-        ...mangaData,
-        uploader_username: uploaderName, 
-        coverImage: mangaData.coverImage || "https://i.imgur.com/3n7f1bF.jpg", 
-        status: "Đang tiến hành"
-      };
-      existingMangas.push(newComic);
-      localStorage.setItem('mangas', JSON.stringify(existingMangas));
+    const data = await response.json();
 
-      console.log(" Đã lưu truyện vào LocalStorage:", newComic);
-      resolve({ 
-        ok: true, 
-        message: "Thêm truyện thành công!", 
-        manga: newComic 
-      });
-    }, 1500);
-  });
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi server');
+    }
+
+    return { 
+      ok: true, 
+      message: "Thêm truyện thành công!", 
+      manga: data.manga 
+    };
+  } catch (error) {
+    console.error("Lỗi khi gọi API createNewManga:", error);
+    return { ok: false, message: error.message };
+  }
 };
 // frontend/src/data/api.js
 
@@ -675,21 +672,21 @@ export const becomeUploader = async () => {
 
   // const users = getUsers();
   // const nextUsers = users.map((user) =>
-  //   user.id === userId ? { ...user, is_uploader: true } : user
+  //   user.id === userId ? { ...user, is_poster: true } : user
   // );
 
   try {
     const user = await getCurrentUser();
     if (!user) return { ok: false, message: "Bạn cần đăng nhập trước." };
     if (user.user_role === "admin") return { ok: false, message: "Admin không thể trở thành Uploader." };
-    if (user.user_role === "uploader") return { ok: false, message: "Bản đã trở thành Uploader." };
+    if (user.user_role === "poster") return { ok: false, message: "Bản đã trở thành Uploader." };
     
     const becomesUploader = await request("/api/auth/update-user-access", {
       method: "POST",
-      body: JSON.stringify({ userRole: "uploader" }),
+      body: JSON.stringify({ userRole: "poster" }),
     });
 
-    const updatedUser = becomesUploader.user || { ...user, user_role: "uploader" };
+    const updatedUser = becomesUploader.user || { ...user, user_role: "poster" };
     writeStorage(STORAGE_KEYS.currentUser, updatedUser);
     
     return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };

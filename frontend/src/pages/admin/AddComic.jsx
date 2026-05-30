@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Công cụ để chuyển trang
 import { createNewManga } from '../../data/api';
+import mockData from '../../data/mockData.json';
+
+const genresList = mockData.genres;
+
 const AddComic = () => {
+  const navigate = useNavigate(); // Khởi tạo công cụ điều hướng
   const [formData, setFormData] = useState({ title: '', author: '', description: '', category: '' });
   const [coverImage, setCoverImage] = useState(null);
   
@@ -35,19 +41,28 @@ const AddComic = () => {
     }
 
     setError('');
-    setSuccess('Đang xử lý...');
+    setSuccess('Đang tải ảnh lên Cloudinary và lưu dữ liệu...');
     
-    console.log("=== DỮ LIỆU CHUẨN BỊ GỬI LÊN SERVER ===");
-    console.log("Thông tin:", formData);
+    const payload = new FormData();
+    payload.append('title', formData.title);
+    payload.append('author', formData.author);
+    payload.append('summary', formData.description); 
+    payload.append('category', formData.category);
     
-    const res = await createNewManga(formData);
+    if (coverImage) {
+      payload.append('coverImage', coverImage);
+    }
+    
+    const res = await createNewManga(payload);
     
     if (res.ok) {
       setSuccess('Thêm truyện thành công! Mời bạn quay lại Studio để kiểm tra.');
       setFormData({ title: '', author: '', description: '', category: '' });
       setCoverImage(null);
     } else {
-      setError('Lưu truyện thất bại, vui lòng thử lại.');
+      setError(res.message || 'Lưu truyện thất bại, vui lòng thử lại.');
+      // Xóa chữ "Đang tải ảnh..." nếu bị lỗi
+      setSuccess(''); 
     }
   };
 
@@ -74,9 +89,9 @@ const AddComic = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Thể loại</label>
           <select name="category" value={formData.category} onChange={handleInputChange} className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">-- Chọn thể loại --</option>
-            <option value="Hành động">Hành động</option>
-            <option value="Tình cảm">Tình cảm</option>
-            <option value="Xuyên không">Xuyên không</option>
+            {genresList.map((genre) => (
+              <option key={genre.id} value={genre.name}>{genre.name}</option>
+            ))}
           </select>
         </div>
 
@@ -91,7 +106,8 @@ const AddComic = () => {
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
-          <button type="button" className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 font-medium">Hủy bỏ</button>
+          {/* Nút Hủy đã được gắn lệnh quay lại trang trước */}
+          <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 font-medium">Hủy bỏ</button>
           <button type="submit" className="px-6 py-2 bg-blue-600 rounded text-white hover:bg-blue-700 font-medium shadow-sm">Lưu truyện</button>
         </div>
       </form>
