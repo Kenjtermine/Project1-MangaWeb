@@ -770,20 +770,39 @@ export const createNewChapter = async (payload) => {
     return { ok: false, message: error.message };
   }
 };
-export const fetchMangaList = async () => {
+export const fetchMangaList = async ({ keyword, page = 1, limit = 20 } = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/mangas`);
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (keyword) params.set("keyword", keyword);
+
+    const response = await fetch(`${API_BASE_URL}/api/mangas?${params}`);
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Lỗi lấy danh sách truyện');
+      throw new Error(data.message || "Lỗi lấy danh sách truyện");
     }
-    
-    return { ok: true, mangas: data.data || [] }; 
+
+    const mangas = (data.data || []).map(normalizeManga).filter((m) => m.id);
+    return { ok: true, mangas };
   } catch (error) {
     console.error("Lỗi fetchMangaList:", error);
     return { ok: false, mangas: [] };
   }
+};
+
+/** Truyện hot: sắp theo lượt xem từ danh sách API */
+export const fetchHotMangas = async (limit = 5) => {
+  const res = await fetchMangaList({ limit: Math.max(limit, 20) });
+  if (!res.ok) return res;
+
+  const hotMangas = [...res.mangas]
+    .sort((a, b) => (b.total_views || 0) - (a.total_views || 0))
+    .slice(0, limit);
+
+  return { ok: true, mangas: hotMangas };
 };
 // 1. Hàm lấy thông tin chi tiết 1 truyện
 export const fetchMangaById = async (id) => {

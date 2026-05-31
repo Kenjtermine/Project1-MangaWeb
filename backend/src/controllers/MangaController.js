@@ -132,7 +132,7 @@ async function getMangaList(req, res, next) {
     const query = `
       SELECT * FROM manga
       ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY updated_at DESC, created_at DESC
       LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `;
     

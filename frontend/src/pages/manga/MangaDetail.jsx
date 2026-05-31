@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FaBookOpen, FaEye, FaHeart, FaList, FaRss, FaStar, FaTags, FaUser } from "react-icons/fa";
+import { FaBookOpen, FaEye, FaHeart, FaList, FaRss, FaTags, FaUser } from "react-icons/fa";
 import FavBtn from "../../components/favorite/FavoriteBt";
 import RatingBt from "../../components/rating/RatingBt";
-import { getChaptersByMangaId, getGenresByMangaId, getMangaById, getTotalFavorites } from "../../data/api";
-import { useEffect, useState } from "react";
-
-// 1. IMPORT CÁC HÀM GỌI API THẬT
-import { fetchMangaById, fetchChaptersByMangaId } from "../../data/api";
+import {
+  fetchMangaById,
+  fetchChaptersByMangaId,
+  getGenresByMangaId,
+  getTotalFavorites,
+} from "../../data/api";
 
 const statusLabel = {
   ongoing: "Đang tiến hành",
@@ -102,7 +103,7 @@ const MangaDetail = () => {
         </div>
 
         <div>
-          <p className="text-sm italic text-gray-400">Cập nhật lúc: {formatDate(manga.created_at)}</p>
+          <p className="text-sm italic text-gray-400">Cập nhật lúc: {formatDate(manga.updated_at || manga.created_at)}</p>
           <h1 className="mt-2 text-3xl font-bold uppercase text-white">{manga.manga_title}</h1>
 
           <div className="mt-6 grid gap-4 text-sm text-gray-200 sm:grid-cols-2">
@@ -127,13 +128,26 @@ const MangaDetail = () => {
             <div className="flex items-start gap-3">
               <FaEye className="mt-1 text-sky-400" />
               <span>
-                <b>Lượt xem:</b> {formatNumber(manga.manga_daily_views || 0)}
+                <b>Lượt xem:</b> {formatNumber(manga.total_views || 0)}
               </span>
             </div>
           </div>
 
-          {/* ... Phần Đánh giá và Nút Đọc giữ nguyên ... */}
-          
+          <div className="mt-5 flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-semibold text-gray-300">Đánh giá:</span>
+              <RatingBt mangaId={manga.manga_id} />
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <FavBtn mangaId={manga.manga_id} />
+            <span className="flex items-center gap-2 text-sm text-gray-300">
+              <FaHeart className="text-rose-400" />
+              {formatNumber(totalFavorites)} người đã theo dõi
+            </span>
+          </div>
+
           <div className="mt-6 flex flex-wrap gap-3">
             {firstChapter && (
               <Link
