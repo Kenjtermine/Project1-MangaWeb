@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight, FaHome, FaList } from "react-icons/fa";
 import CommentsSection from "../../components/comments/CommentsSection";
@@ -6,19 +6,69 @@ import { addReadingHistory, getChapterById, getChaptersByMangaId, getMangaById, 
 
 const ChapterReader = () => {
   const { mangaId, chapterId } = useParams();
-  const manga = getMangaById(mangaId);
-  const chapter = getChapterById(chapterId);
-  const chapters = getChaptersByMangaId(mangaId);
-  const pages = getReaderPages(mangaId, chapterId);
-  const currentIndex = chapters.findIndex((item) => item.chapter_id === Number(chapterId));
-  const prevChapter = currentIndex >= 0 ? chapters[currentIndex + 1] : null;
-  const nextChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
+  
+  // Khởi tạo State mặc định là null hoặc mảng rỗng để không bị báo lỗi "Cannot read properties of undefined"
+  const [manga, setManga] = useState(null);
+  const [chapter, setChapter] = useState(null);
+  const [chapters, setChapters] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (manga && chapter) {
-      addReadingHistory({ mangaId: manga.id, chapterId: chapter.chapter_id, pageNumber: 1, progressPercent: 5 });
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Truyền đủ 2 tham số mangaId và chapterId cho getReaderPages như hàm Hybrid ở trên
+        const [mangaData, chapterData, chaptersList, pagesList] = await Promise.all([
+          getMangaById(mangaId),
+          getChapterById(chapterId),
+          getChaptersByMangaId(mangaId),
+          getReaderPages(mangaId, chapterId) 
+        ]);
+
+        // Cập nhật State, đảm bảo dùng fallback rỗng nếu data bị hụt
+        setManga(mangaData || null);
+        setChapter(chapterData || null);
+        setChapters(chaptersList || []);
+        setPages(pagesList || []);
+      } catch (error) {
+        console.error("Lỗi Fatal khi tải dữ liệu chương truyện:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (mangaId && chapterId) {
+      fetchData();
     }
-  }, [manga, chapter]);
+  }, [mangaId, chapterId]);
+
+  useEffect(() => {
+    const triggerViewLog = async () => {
+      try {
+        await fetch(`http://localhost:5000/api/mangas/chapters/${chapterId}/view`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.warn("⚠️ API View Log chưa chạy (có thể do Backend đang lỗi):", error.message);
+      }
+    };
+
+    // Chỉ trigger khi mọi thứ đã load xong
+    if (chapterId && !isLoading && manga && chapter) {
+      triggerViewLog();
+      // addReadingHistory({ mangaId: manga.id, chapterId: chapter.chapter_id, pageNumber: 1, progressPercent: 5 });
+    }
+  }, [chapterId, isLoading, manga, chapter]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">
+        <h1 className="text-xl font-semibold animate-pulse">Đang tải truyện...</h1>
+      </div>
+    );
+  }
 
   if (!manga || !chapter) {
     return (
@@ -30,6 +80,12 @@ const ChapterReader = () => {
       </div>
     );
   }
+
+  // Logic an toàn chống lỗi findIndex
+  const safeChapters = chapters || [];
+  const currentIndex = safeChapters.findIndex((item) => item.chapter_id === Number(chapterId));
+  const prevChapter = currentIndex >= 0 ? safeChapters[currentIndex + 1] : null;
+  const nextChapter = currentIndex > 0 ? safeChapters[currentIndex - 1] : null;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
@@ -75,15 +131,19 @@ const ChapterReader = () => {
 
       <main className="mx-auto max-w-4xl px-3 py-6">
         <div className="space-y-4">
-          {pages.map((page) => (
-            <img
-              key={page.page_number}
-              src={page.image_url}
-              alt={`${manga.title} chapter ${chapter.chapter_number} page ${page.page_number}`}
-              className="mx-auto w-full max-w-[900px] rounded bg-neutral-900 shadow-xl"
-              loading="lazy"
-            />
-          ))}
+          {pages.length > 0 ? (
+            pages.map((page) => (
+              <img
+                key={page.page_number}
+                src={page.image_url}
+                alt={`${manga.title} chapter ${chapter.chapter_number} page ${page.page_number}`}
+                className="mx-auto w-full max-w-[900px] rounded bg-neutral-900 shadow-xl"
+                loading="lazy"
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-400">Chưa có trang truyện nào được cập nhật.</p>
+          )}
         </div>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">

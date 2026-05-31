@@ -1,28 +1,40 @@
-import React from "react";
-import HeroCarousel from "../components/hero-carousel/HeroCarousel";
-import MangaCard from "../components/manga/MangaCard";
-import { getAllMangas } from "../data/api";
+import React, { useState, useEffect } from 'react';
+import { getAllMangas } from '../data/api'; // Kiểm tra lại đường dẫn import cho đúng nhé bro
 
 const Homepage = () => {
-  const featuredManga = getAllMangas().slice(0, 8);
+  const [mangas, setMangas] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllMangas();
+        
+        // Đảm bảo dữ liệu lấy về là mảng trước khi slice để tránh lỗi crash
+        if (Array.isArray(data)) {
+          setMangas(data.slice(0, 6)); 
+        } else {
+          setMangas([]);
+        }
+      } catch (error) {
+        console.error("Lỗi khi load danh sách truyện tại trang chủ:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) return <div className="text-center p-5">Đang tải danh sách truyện...</div>;
 
   return (
-    <div className="flex-col">
-      <div className="flex-1 flex flex-col bg-neutral-900 text-white p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-white">Truyện hot hôm nay</h2>
-        <HeroCarousel />
-      </div>
-
-      <main className="flex-1 p-6">
-        <section>
-          <h2 className="text-2xl font-semibold mb-6 text-indigo-700">Truyện mới cập nhật</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featuredManga.map((manga) => (
-              <MangaCard key={manga.id} manga={manga} />
-            ))}
-          </div>
-        </section>
-      </main>
+    <div className="homepage-container">
+      {/* Code giao diện hiển thị danh sách truyện của bro ở đây */}
+      {mangas.map((manga) => (
+        <div key={manga.id}>{manga.title}</div>
+      ))}
     </div>
   );
 };
