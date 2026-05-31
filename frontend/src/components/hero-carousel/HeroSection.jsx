@@ -1,14 +1,28 @@
-import coverImage from "../../assets/Login_side_img.jpg";
+import { useEffect, useState } from "react";
 import FavBtn from "../favorite/FavoriteBt";
-import { Link } from "react-router-dom"; 
-import { getRankingMangas, getGenres } from "../../data/api";
+import { Link } from "react-router-dom";
+import { getRankingMangas, getGenresByMangaId } from "../../data/api";
 
-const genreNameById = getGenres().reduce((acc, genre) => {
-        acc[genre.id] = genre.name;
-        return acc;
-    }, {});
 const HeroSection = () => {
     const top1Manga = getRankingMangas(1)[0];
+    const mangaId = top1Manga?.manga_id || top1Manga?.id;
+    const [genresOfManga, setGenresOfManga] = useState([]);
+
+    useEffect(() => {
+        if (!mangaId) return;
+
+        let cancelled = false;
+        getGenresByMangaId(mangaId).then((genres) => {
+            if (!cancelled) setGenresOfManga(genres);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [mangaId]);
+
+    if (!top1Manga) return null;
+
     return (
         <div 
             className="relative w-full h-auto md:h-[400px] overflow-hidden shadow-lg mb-8" 
@@ -39,11 +53,13 @@ const HeroSection = () => {
                     
                     {/* Thể loại (Tags) nổi bật */}
                     <div className="flex flex-wrap gap-2 mb-4">
-                        {top1Manga.genreIds.slice(0, 3).map((genreId) => (
-                            <span key={genreId} className="px-3 py-1 text-xs font-bold bg-white text-black rounded-sm uppercase">
-                                {genreNameById[genreId]}
-                            </span>
-                        ))}
+                        {genresOfManga.map((genre) => {
+                            return (
+                                <span key={genre.genre_id} className="px-3 py-1 text-xs font-bold bg-white text-black rounded-sm uppercase">
+                                    {genre?.genre_name}
+                                </span>
+                            );
+                        })}
                     </div>
 
                     {/* Tóm tắt nội dung */}

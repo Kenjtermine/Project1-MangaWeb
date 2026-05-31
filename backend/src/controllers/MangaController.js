@@ -1,28 +1,56 @@
 const db = require('../config/db');
 
+// Hàm hỗ trợ tạo đường dẫn thân thiện (slug)
 const generateSlug = (title) => {
   return title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 };
 
+function parseGenreIds(body) {
+  const raw = body.genreIds;
+  if (raw === undefined || raw === null || raw === '') return [];
+
+  if (Array.isArray(raw)) {
+    return raw.map(Number).filter((id) => Number.isInteger(id) && id > 0);
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(Number).filter((id) => Number.isInteger(id) && id > 0);
+      }
+    } catch {
+      // fall through to comma-separated
+    }
+    return raw
+      .split(',')
+      .map((id) => Number(id.trim()))
+      .filter((id) => Number.isInteger(id) && id > 0);
+  }
+
+  const single = Number(raw);
+  return Number.isInteger(single) && single > 0 ? [single] : [];
+}
+
+
+// ==========================================
+// PHẦN 1: CÁC HÀM CỦA HIẾU (QUẢN LÝ STUDIO)
+// ==========================================
+
+// Hàm đăng truyện mới
 async function createManga(req, res, next) {
   try {
-    // 1. Chỉ lấy chữ từ req.body (Xóa coverImage ở đây đi)
     const { title, author, summary, poster_id } = req.body;
-
-    // 2. Lấy link ảnh Cloudinary từ req.file do Multer trả về
     const coverImageUrl = req.file ? req.file.path : '';
+    const genreIds = parseGenreIds(req.body);
 
     if (!title || !author) {
       return res.status(400).json({ message: 'Title and Author are required' });
-    }
-    if (!poster_id) {
-      return res.status(400).json({ message: 'Lỗi: Không tìm thấy ID người đăng truyện!' });
     }
 
     const slug = generateSlug(title);
     const status = 'ongoing'; 
     
-    // 3. Đưa coverImageUrl vào mảng giá trị (chỗ $5)
     const insertResult = await db.query(
       `
         INSERT INTO manga (
@@ -31,32 +59,40 @@ async function createManga(req, res, next) {
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
       `,
-      [title, slug, author, summary || '', coverImageUrl, status, poster_id] 
+      [title, slug, author, summary || '', coverImageUrl, status, poster_id]
     );
 
     const newManga = insertResult.rows[0];
 
-    return res.status(201).json({ 
-      message: 'Thêm truyện thành công!',
-      manga: newManga 
-    });
+    if (genreIds.length > 0) {
+      const values = genreIds
+        .map((_, index) => `($1, $${index + 2})`)
+        .join(', ');
+      await db.query(
+        `INSERT INTO manga_genres (manga_id, genre_id) VALUES ${values} ON CONFLICT DO NOTHING`,
+        [newManga.manga_id, ...genreIds]
+      );
+    }
 
+    return res.status(201).json({
+      message: 'Thêm truyện thành công!',
+      manga: newManga,
+      genreIds,
+    });
   } catch (error) {
     return next(error);
   }
 }
-// Hàm lấy danh sách truyện của một tác giả (uploader) cụ thể
+
+// Hàm lấy danh sách truyện của một tác giả cụ thể (Dùng trong Studio)
 async function getMyMangas(req, res, next) {
   try {
-    // Nhận poster_id từ Frontend gửi lên
     const { poster_id } = req.query; 
 
-    // Nếu không có ID thì báo lỗi luôn
     if (!poster_id) {
       return res.status(400).json({ message: 'Thiếu ID của người đăng truyện' });
     }
 
-    // Câu lệnh SQL: Chỉ lấy truyện có poster_id trùng khớp
     const query = `
       SELECT * FROM manga 
       WHERE poster_id = $1 
@@ -66,16 +102,108 @@ async function getMyMangas(req, res, next) {
 
     return res.status(200).json({
       message: 'Lấy dữ liệu thành công',
-      mangas: result.rows 
+      mangas: result.rows,
     });
-
   } catch (error) {
-    console.error("Lỗi lấy danh sách truyện Studio:", error);
     return next(error);
   }
 }
 
+// ==========================================
+// PHẦN 2: CÁC HÀM CỦA LÂM (TRANG CHỦ & ĐỌC TRUYỆN)
+// ==========================================
+
+// Hàm lấy toàn bộ danh sách truyện (Trang chủ, Tìm kiếm, Phân trang)
+async function getMangaList(req, res, next) {
+  try {
+    // Nhận các tham số tìm kiếm từ Frontend
+    const { keyword, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let queryParams = [];
+    let conditions = ["manga_status IN ('ongoing', 'completed')"];  
+    if (keyword) {
+      queryParams.push(`%${keyword}%`);
+      conditions.push(`manga_title ILIKE $${queryParams.length}`);
+    }
+
+    let whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const query = `
+      SELECT * FROM manga
+      ${whereClause}
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
+    `;
+    
+    queryParams.push(limit, offset);
+    const result = await db.query(query, queryParams);
+
+    return res.status(200).json({
+      message: 'Lấy danh sách truyện thành công',
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Lỗi getMangaList:", error);
+    return next(error);
+  }
+}
+
+// Hàm lấy thông tin chi tiết 1 bộ truyện bằng Slug (Trang chi tiết truyện)
+async function getMangaBySlug(req, res, next) {
+  try {
+    const { slug } = req.params;
+    const query = `
+      SELECT * FROM manga 
+      WHERE manga_slug = $1 AND manga_status IN ('ongoing', 'completed')
+    `;
+    const result = await db.query(query, [slug]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy truyện' });
+    }
+    
+    return res.status(200).json({
+      message: 'Lấy thông tin truyện thành công',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Lỗi getMangaBySlug:", error);
+    return next(error);
+  }
+}
+
+// Hàm lấy thông tin chi tiết 1 bộ truyện bằng ID
+async function getMangaById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const query = `
+      SELECT * FROM manga 
+      WHERE manga_id = $1 AND manga_status IN ('completed', 'ongoing')
+    `;
+    const result = await db.query(query, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy truyện' });
+    }
+    
+    return res.status(200).json({
+      message: 'Lấy thông tin truyện thành công',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Lỗi getMangaById:", error);
+    return next(error);
+  }
+}
+
+// ==========================================
+// EXPORT TẤT CẢ RA NGOÀI
+// ==========================================
 module.exports = {
   createManga,
-  getMyMangas, // Nhớ export hàm này ra
+  getMyMangas,
+  getMangaList,
+  getMangaBySlug,
+  getMangaById
 };

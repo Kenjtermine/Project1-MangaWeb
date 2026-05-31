@@ -1,14 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getAuthors, getGenres } from "../../data/api";
 
-const genres = getGenres();
 const authors = getAuthors();
 
 const FilterTable = ({ initialFilters = {}, onApply, onClose }) => {
-    const [isSelectedMultiple, setIsSelectedMultiple] = useState(initialFilters.genreIds || []); // Lưu ID thể loại đã chọn
-    const [isSelectedSingle, setIsSelectedSingle] = useState(initialFilters.authorId || null); // Lưu ID tác giả đã chọn
+    const [genres, setGenres] = useState([]);
+    const [isSelectedMultiple, setIsSelectedMultiple] = useState(initialFilters.genreIds || []);
+    const [isSelectedSingle, setIsSelectedSingle] = useState(initialFilters.authorId || null);
     const [status, setStatus] = useState(initialFilters.status || "");
     const [sort, setSort] = useState(initialFilters.sort || "latest");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        getGenres().then((genreList) => {
+            if (!cancelled) setGenres(genreList);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const toggleSelection = (id) => {
         if (isSelectedMultiple.includes(id)) {
@@ -35,27 +47,26 @@ const FilterTable = ({ initialFilters = {}, onApply, onClose }) => {
     }
 
     return (
-        // ĐÃ XÓA: absolute, top-full, left-0, z-50, shadow-...
-        // THÊM VÀO: mt-3 (để cách cái nút ra một chút)
         <div className="w-full mt-3 bg-neutral-900 text-gray-300 rounded-md p-6 border border-sky-500/30">
             
             <h3 className="text-lg font-bold mb-4 text-sky-400">Thể loại</h3>
             <ul className="flex flex-wrap gap-3">
-                {genres.map((genre) => (                    
+                {genres.length > 0 ? genres.map((genre) => (                    
                     <li 
                         key={genre.id} 
                         onClick={() => toggleSelection(genre.id)}
-                            // UI UPDATE: Biến nó thành các Thẻ Tag (Pill)
                             className={`px-3 py-1.5 text-sm rounded-full border transition-all duration-200 cursor-pointer select-none
                                 ${isSelectedMultiple.includes(genre.id)
-                                    ? 'bg-sky-600 border-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]' // Trạng thái Đang chọn
-                                    : 'bg-transparent border-neutral-700 hover:border-sky-400 hover:text-white' // Trạng thái Bình thường
+                                    ? 'bg-sky-600 border-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]'
+                                    : 'bg-transparent border-neutral-700 hover:border-sky-400 hover:text-white'
                                 }`
                             }
                     >
                         {genre.name}
                     </li>
-                ))}
+                )) : (
+                    <li className="text-sm text-gray-500">Đang tải thể loại...</li>
+                )}
             </ul>
             
             <div className="h-px bg-sky-900/30 w-full my-6"></div>
@@ -66,11 +77,10 @@ const FilterTable = ({ initialFilters = {}, onApply, onClose }) => {
                     <li 
                         key={author.id} 
                         onClick={() => setIsSelectedSingle(author.id)}
-                            // UI UPDATE: Biến nó thành các Thẻ Tag (Pill)
                             className={`px-3 py-1.5 text-sm rounded-full border transition-all duration-200 cursor-pointer select-none
                                 ${isSelectedSingle === author.id
-                                    ? 'bg-sky-600 border-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]' // Trạng thái Đang chọn
-                                    : 'bg-transparent border-neutral-700 hover:border-sky-400 hover:text-white' // Trạng thái Bình thường
+                                    ? 'bg-sky-600 border-sky-600 text-white shadow-[0_0_10px_rgba(2,132,199,0.5)]'
+                                    : 'bg-transparent border-neutral-700 hover:border-sky-400 hover:text-white'
                                 }`
                             }
                     >

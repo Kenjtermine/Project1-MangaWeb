@@ -5,11 +5,12 @@ const chapterController = require('../controllers/ChapterController');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const env = require('../config/env');
 
 cloudinary.config({
-  cloud_name: 'dqbrifz8f',
-  api_key: '942567316844217',
-  api_secret: '7l7zz7AdbHGnbz0C4cVJkLyH6XM'
+  cloud_name: env.cloudinaryCloudName,
+  api_key: env.cloudinaryApiKey,
+  api_secret: env.cloudinaryApiSecret
 });
 
 const storage = new CloudinaryStorage({
@@ -26,4 +27,9 @@ const upload = multer({ storage: storage });
 router.post('/', upload.single('coverImage'), mangaController.createManga);
 router.get('/my-comics', mangaController.getMyMangas);
 router.post('/chapters', upload.array('pages', 50), chapterController.createChapter);
+router.get('/', mangaController.getMangaList);
+router.get('/id/:id', mangaController.getMangaById);
+router.get('/slug/:slug', mangaController.getMangaBySlug);
+router.get('/:mangaId/chapters', chapterController.getChaptersByMangaId);
+router.get('/chapters/:chapterId/pages', chapterController.getPagesByChapterId);
 module.exports = router;

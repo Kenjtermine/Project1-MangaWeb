@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import FilterTable from "../../components/genre-list/FilterTable";
 import MangaCard from "../../components/manga/MangaCard";
-import { getGenres, getMangasByGenre, searchMangas } from "../../data/api";
+import { getGenreById, getMangasByGenre, searchMangas } from "../../data/api";
 
 const SearchPage = ({ mode = "genre", results = null }) => {
   const { genreId } = useParams();
@@ -10,22 +10,59 @@ const SearchPage = ({ mode = "genre", results = null }) => {
   const keyword = searchParams.get("keyword") || "";
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState({ genreIds: [], authorId: null, status: "", sort: "latest" });
-  const genres = getGenres();
+  const [displayResults, setDisplayResults] = useState([]);
+  const [pageTitle, setPageTitle] = useState("");
+  const [pageSubtitle, setPageSubtitle] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  let displayResults = results || [];
-  let pageTitle = "";
-  let pageSubtitle = "";
+  useEffect(() => {
+    if (results) {
+      setDisplayResults(results);
+      setPageTitle("");
+      setPageSubtitle("");
+      return;
+    }
 
-  if (mode === "genre" && genreId) {
-    const genre = genres.find((item) => item.id === Number(genreId));
-    displayResults = getMangasByGenre(genreId);
-    pageTitle = genre?.name || "Thể loại";
-    pageSubtitle = genre?.description || "Không có mô tả";
-  } else if (mode === "search") {
-    displayResults = searchMangas({ keyword, ...filters });
-    pageTitle = keyword ? `Kết quả tìm kiếm: "${keyword}"` : "Kết quả duyệt truyện";
-    pageSubtitle = `${displayResults.length} truyện được tìm thấy`;
-  } else {
+    if (mode === "genre" && genreId) {
+      let cancelled = false;
+
+      const loadGenrePage = async () => {
+        setIsLoading(true);
+        try {
+          const [genre, mangas] = await Promise.all([
+            getGenreById(genreId),
+            getMangasByGenre(genreId),
+          ]);
+
+          if (cancelled) return;
+
+          setDisplayResults(mangas);
+          setPageTitle(genre?.name || "Thể loại");
+          setPageSubtitle(genre?.description || "Không có mô tả");
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      };
+
+      loadGenrePage();
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (mode === "search") {
+      const searchResults = searchMangas({ keyword, ...filters });
+      setDisplayResults(searchResults);
+      setPageTitle(keyword ? `Kết quả tìm kiếm: "${keyword}"` : "Kết quả duyệt truyện");
+      setPageSubtitle(`${searchResults.length} truyện được tìm thấy`);
+      setIsLoading(false);
+    }
+
+    return undefined;
+  }, [mode, genreId, keyword, filters, results]);
+
+  if (mode !== "genre" && mode !== "search" && !results) {
     return <div className="bg-neutral-900 text-white p-8">Mode không hợp lệ</div>;
   }
 
@@ -69,19 +106,27 @@ const SearchPage = ({ mode = "genre", results = null }) => {
       <h2 className="text-3xl font-bold mb-4 text-white">{pageTitle}</h2>
       <p className="text-gray-300 mb-6">{pageSubtitle}</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {displayResults.length > 0 ? (
-          displayResults.map((manga) => <MangaCard key={manga.id} manga={manga} />)
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-gray-400 text-lg">
-              {mode === "genre"
-                ? "Chưa có dữ liệu thể loại này"
-                : "Không tìm thấy truyện nào trùng khớp với tìm kiếm của bạn."}
-            </p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="col-span-full text-center py-12">
+          <p className="text-gray-400 text-lg">Đang tải...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {displayResults.length > 0 ? (
+            displayResults.map((manga) => (
+              <MangaCard key={manga.id ?? manga.manga_id} manga={manga} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-400 text-lg">
+                {mode === "genre"
+                  ? "Chưa có dữ liệu thể loại này"
+                  : "Không tìm thấy truyện nào trùng khớp với tìm kiếm của bạn."}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

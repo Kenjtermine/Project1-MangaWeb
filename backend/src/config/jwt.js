@@ -3,8 +3,9 @@ const env = require('./env');
 
 const jwtConfig = {
     SECRET: env.jwtSecret,
-    EXPIRES_IN: '1h', // Token sẽ hết hạn sau 1h
-    REFRESH_TOKEN_EXPIRES_IN: '7d' // Refresh token sẽ hết hạn sau 7 ngày
+    REFRESH_SECRET: env.jwtRefreshSecret,
+    EXPIRES_IN: env.jwtExpiresIn,
+    REFRESH_TOKEN_EXPIRES_IN: env.jwtRefreshExpiresIn
 };
 
 function generateAccessToken(user) {

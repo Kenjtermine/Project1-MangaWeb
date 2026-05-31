@@ -47,7 +47,7 @@ const Header = () => {
                 <Link to="/" className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                         <div className="text-4xl font-bold text-sky-600">MangaWeb</div>
-                        <img src="https://i.imgur.com/1n7f1bF.jpg" alt="MangaWeb Logo" className="h-16 w-16 rounded-full" />
+                        <img src="https://tse4.mm.bing.net/th/id/OIP.LsOdTCgtL5TkjiIFCpYlrgHaE8?pid=Api&h=220&P=0" alt="MangaWeb Logo" className="h-16 w-16 rounded-full" />
                     </div>
                 </Link>
 

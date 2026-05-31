@@ -197,9 +197,91 @@ async function toggleCommentReaction(req, res, next) {
   }
 }
 
+async function getAdminComments(req, res, next) {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const search = (req.query.search || '').trim();
+
+    const params = [limit];
+    let searchClause = '';
+
+    if (search) {
+      params.unshift(`%${search}%`);
+      searchClause = `
+        AND (
+          c.content ILIKE $1
+          OR u.user_name ILIKE $1
+          OR m.manga_title ILIKE $1
+        )
+      `;
+    }
+
+    const result = await db.query(
+      `
+        SELECT
+          c.comment_id,
+          c.chapter_id,
+          c.user_id,
+          c.content,
+          c.like_count,
+          c.dislike_count,
+          c.is_deleted,
+          c.created_at,
+          u.user_name,
+          ch.manga_id,
+          ch.chapter_number,
+          m.manga_title
+        FROM comments c
+        LEFT JOIN users u ON u.user_id = c.user_id
+        LEFT JOIN chapters ch ON ch.chapter_id = c.chapter_id
+        LEFT JOIN manga m ON m.manga_id = ch.manga_id
+        WHERE c.is_deleted = false
+        ${searchClause}
+        ORDER BY c.created_at DESC
+        LIMIT $${params.length}
+      `,
+      search ? params : [limit]
+    );
+
+    return res.json({ comments: result.rows });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function adminDeleteComment(req, res, next) {
+  try {
+    const commentIdNum = Number(req.params.commentId);
+
+    if (!Number.isInteger(commentIdNum) || commentIdNum <= 0) {
+      return res.status(400).json({ message: 'commentId is invalid' });
+    }
+
+    const result = await db.query(
+      `
+        UPDATE comments
+        SET is_deleted = true, updated_at = NOW()
+        WHERE comment_id = $1 AND is_deleted = false
+        RETURNING comment_id
+      `,
+      [commentIdNum]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy bình luận' });
+    }
+
+    return res.json({ message: 'Đã xóa bình luận', commentId: commentIdNum });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getComments,
   createComment,
   deleteComment,
-  toggleCommentReaction
+  toggleCommentReaction,
+  getAdminComments,
+  adminDeleteComment,
 };

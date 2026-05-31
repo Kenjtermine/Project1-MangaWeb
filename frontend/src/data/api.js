@@ -1,7 +1,6 @@
 import mockData from "./mockData.json";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
 const STORAGE_KEYS = {
   authToken: "authToken",
   refreshToken: "refreshToken",
@@ -217,11 +216,80 @@ export const getReaderPages = (mangaId, chapterId) => {
   }));
 };
 
-export const getGenres = () => mockData.genres;
+export const normalizeGenre = (genre = {}) => ({
+  id: Number(genre.id ?? genre.genre_id),
+  name: genre.name ?? genre.genre_name ?? "",
+  description: genre.description ?? genre.genre_description ?? "",
+});
+
+export const normalizeManga = (manga = {}) => ({
+  id: Number(manga.manga_id ?? manga.id),
+  manga_id: Number(manga.manga_id ?? manga.id),
+  title: manga.manga_title ?? manga.title ?? "",
+  slug: manga.manga_slug ?? manga.slug ?? "",
+  author: manga.manga_author ?? manga.author ?? "",
+  summary: manga.manga_summary ?? manga.summary ?? "",
+  cover: manga.manga_cover_image ?? manga.cover ?? "",
+  status: manga.manga_status ?? manga.status ?? "",
+  publish_year: manga.publish_year,
+  avg_rating: Number(manga.avg_rating ?? 0),
+  rating_count: Number(manga.rating_count ?? 0),
+  total_views: Number(manga.total_views ?? 0),
+  updated_at: manga.updated_at,
+});
+
+export const getGenres = async () => {
+  try {
+    const data = await request('/api/genres/get-genres', {
+      method: 'GET'
+    });
+    const genres = (data.genres || []).map(normalizeGenre).filter((genre) => genre.id);
+    if (genres.length) return genres;
+  } catch (error) {
+    console.error('Lỗi lấy danh sách thể loại:', error);
+  }
+  return mockData.genres;
+};
+
+export const getGenreById = async (genreId) => {
+  try {
+    const data = await request(`/api/genres/get-genre/${genreId}`, {
+      method: 'GET'
+    });
+    if (data.genre) return normalizeGenre(data.genre);
+  } catch (error) {
+    console.error('Lỗi lấy thể loại:', error);
+  }
+  return mockData.genres.find((genre) => genre.id === Number(genreId)) || null;
+};
+
+
 
 export const getAuthors = () => mockData.authors;
 
-export const getMangasByGenre = (genreId) => {
+export const getGenresByMangaId = async (mangaId) => {
+  try {
+    const data = await request(`/api/genres/get-genres/${mangaId}`, {
+      method: 'GET'
+    });
+    return data.genres || [];
+  } catch (error) {
+    console.error('Lỗi lấy danh sách thể loại của truyện:', error);
+    return [];
+  }
+};
+
+export const getMangasByGenre = async (genreId) => {
+  try {
+    const data = await request(`/api/genres/mangas-by-genre/${genreId}`, {
+      method: 'GET'
+    });
+    const mangas = (data.mangas || []).map(normalizeManga).filter((manga) => manga.id);
+    if (mangas.length) return mangas;
+  } catch (error) {
+    console.error('Lỗi lấy truyện theo thể loại:', error);
+  }
+
   const ids = mockData.mangaByGenre[String(genreId)] || [];
   return mockData.allMangas.filter((manga) => ids.includes(manga.id) || manga.genreIds?.includes(Number(genreId)));
 };
@@ -702,6 +770,89 @@ export const createNewChapter = async (payload) => {
     return { ok: false, message: error.message };
   }
 };
+export const fetchMangaList = async ({ keyword, page = 1, limit = 20 } = {}) => {
+  try {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (keyword) params.set("keyword", keyword);
+
+    const response = await fetch(`${API_BASE_URL}/api/mangas?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Lỗi lấy danh sách truyện");
+    }
+
+    const mangas = (data.data || []).map(normalizeManga).filter((m) => m.id);
+    return { ok: true, mangas };
+  } catch (error) {
+    console.error("Lỗi fetchMangaList:", error);
+    return { ok: false, mangas: [] };
+  }
+};
+
+/** Truyện hot: sắp theo lượt xem từ danh sách API */
+export const fetchHotMangas = async (limit = 5) => {
+  const res = await fetchMangaList({ limit: Math.max(limit, 20) });
+  if (!res.ok) return res;
+
+  const hotMangas = [...res.mangas]
+    .sort((a, b) => (b.total_views || 0) - (a.total_views || 0))
+    .slice(0, limit);
+
+  return { ok: true, mangas: hotMangas };
+};
+// 1. Hàm lấy thông tin chi tiết 1 truyện
+export const fetchMangaById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/id/${id}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi lấy thông tin truyện');
+    }
+    
+    return { ok: true, manga: data.data }; 
+  } catch (error) {
+    console.error("Lỗi fetchMangaById:", error);
+    return { ok: false, manga: null };
+  }
+};
+
+// 2. Hàm lấy danh sách chương của truyện đó
+export const fetchChaptersByMangaId = async (mangaId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/${mangaId}/chapters`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error('Lỗi lấy chapter');
+    }
+    
+    return data.data || [];
+  } catch (error) {
+    console.error("Lỗi fetchChaptersByMangaId:", error);
+    return [];
+  }
+};
+// Hàm lấy danh sách trang ảnh của 1 chương
+export const fetchPagesByChapterId = async (chapterId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/chapters/${chapterId}/pages`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error('Lỗi lấy danh sách trang ảnh');
+    }
+    
+    return data.data || [];
+  } catch (error) {
+    console.error("Lỗi fetchPagesByChapterId:", error);
+    return [];
+  }
+};
 export const becomeUploader = async () => {
   // const userId = getCurrentUserId();
   // if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };
@@ -728,5 +879,102 @@ export const becomeUploader = async () => {
     return { ok: true, message: "Chúc mừng! Bạn đã trở thành Uploader." };
   } catch (error) {
     return { ok: false, message: error.message || "Đăng nhập thất bại." };
+  }
+};
+
+// --- Admin APIs ---
+export const adminGetStats = async () => {
+  try {
+    const data = await request("/api/admin/stats", { method: "GET" });
+    return { ok: true, stats: data.stats };
+  } catch (error) {
+    return { ok: false, stats: null, message: error.message };
+  }
+};
+
+export const adminGetUsers = async () => {
+  try {
+    const data = await request("/api/admin/users", { method: "GET" });
+    return { ok: true, users: data.users || [] };
+  } catch (error) {
+    return { ok: false, users: [], message: error.message };
+  }
+};
+
+export const adminUpdateUserAccess = async ({ userId, userRole, isBanned }) => {
+  try {
+    const body = { userId: Number(userId) };
+    if (userRole !== undefined) body.userRole = userRole;
+    if (isBanned !== undefined) body.isBanned = isBanned;
+
+    const data = await request("/api/admin/users/access", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    return { ok: true, user: data.user, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminGetGenres = async () => {
+  try {
+    const data = await request("/api/admin/genres", { method: "GET" });
+    return { ok: true, genres: (data.genres || []).map(normalizeGenre) };
+  } catch (error) {
+    return { ok: false, genres: [], message: error.message };
+  }
+};
+
+export const adminCreateGenre = async ({ name, description }) => {
+  try {
+    const data = await request("/api/admin/genres", {
+      method: "POST",
+      body: JSON.stringify({ genre_name: name, genre_description: description || null }),
+    });
+    return { ok: true, genre: normalizeGenre(data.genre) };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminUpdateGenre = async (genreId, { name, description }) => {
+  try {
+    const data = await request(`/api/admin/genres/${genreId}`, {
+      method: "PUT",
+      body: JSON.stringify({ genre_name: name, genre_description: description }),
+    });
+    return { ok: true, genre: normalizeGenre(data.genre) };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminDeleteGenre = async (genreId) => {
+  try {
+    const data = await request(`/api/admin/genres/${genreId}`, { method: "DELETE" });
+    return { ok: true, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminGetComments = async ({ search = "", limit = 50 } = {}) => {
+  try {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (search) params.set("search", search);
+    const data = await request(`/api/admin/comments?${params}`, { method: "GET" });
+    return { ok: true, comments: data.comments || [] };
+  } catch (error) {
+    return { ok: false, comments: [], message: error.message };
+  }
+};
+
+export const adminDeleteComment = async (commentId) => {
+  try {
+    await request(`/api/admin/comments/${commentId}`, { method: "DELETE" });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error.message };
   }
 };
