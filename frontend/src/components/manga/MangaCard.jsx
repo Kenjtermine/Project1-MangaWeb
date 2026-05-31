@@ -1,7 +1,7 @@
-import { useState } from "react"; // Đừng quên import useState
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import FavBtn from "../favorite/FavoriteBt";
-import { getGenres } from "../../data/api";
+import { getGenresByMangaId } from "../../data/api";
 
 const statusLabel = {
   ongoing: "Đang ra",
@@ -10,22 +10,30 @@ const statusLabel = {
   cancelled: "Đã hủy",
 };
 
-const genreNameById = getGenres().reduce((acc, genre) => {
-  acc[genre.id] = genre.name;
-  return acc;
-}, {});
+
 
 const MangaCard = ({ manga, className = "" }) => {
-  // Biến state độc lập cho TỪNG thẻ truyện
   const [isHovered, setIsHovered] = useState(false);
+  const [tags, setTags] = useState([]);
+  const mangaId = manga?.manga_id || manga?.id;
+
+  useEffect(() => {
+    if (!mangaId) {
+      setTags([]);
+      return;
+    }
+
+    let cancelled = false;
+    getGenresByMangaId(mangaId).then((genres) => {
+      if (!cancelled) setTags(genres);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mangaId]);
 
   if (!manga) return null;
-
-  const mangaId = manga.manga_id || manga.id;
-  const tags = (manga.genreIds || [])
-    .slice(0, 3)
-    .map((genreId) => genreNameById[genreId])
-    .filter(Boolean);
 
   return (
     <article
@@ -77,8 +85,8 @@ const MangaCard = ({ manga, className = "" }) => {
         <div className="flex flex-wrap gap-1">
           {tags.length > 0 ? (
             tags.map((tag) => (
-              <span key={tag} className="rounded bg-neutral-700 px-2 py-1 text-[10px] text-gray-100">
-                {tag}
+              <span key={tag.genre_id} className="rounded bg-neutral-700 px-2 py-1 text-[10px] text-gray-100">
+                {tag.genre_name}
               </span>
             ))
           ) : (

@@ -5,11 +5,12 @@ const chapterController = require('../controllers/ChapterController');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const env = require('../config/env');
 
 cloudinary.config({
-  cloud_name: 'dqbrifz8f',
-  api_key: '942567316844217',
-  api_secret: '7l7zz7AdbHGnbz0C4cVJkLyH6XM'
+  cloud_name: env.cloudinaryCloudName,
+  api_key: env.cloudinaryApiKey,
+  api_secret: env.cloudinaryApiSecret
 });
 
 const storage = new CloudinaryStorage({

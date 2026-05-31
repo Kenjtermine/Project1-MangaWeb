@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { FaBookOpen, FaEye, FaHeart, FaList, FaRss, FaStar, FaTags, FaUser } from "react-icons/fa";
 import FavBtn from "../../components/favorite/FavoriteBt";
 import RatingBt from "../../components/rating/RatingBt";
-import { getChaptersByMangaId, getGenres, getMangaById, getTotalFavorites } from "../../data/api";
+import { getChaptersByMangaId, getGenresByMangaId, getMangaById, getTotalFavorites } from "../../data/api";
 import { useEffect, useState } from "react";
 
 const statusLabel = {
@@ -32,10 +32,24 @@ const MangaDetail = () => {
   const chapters = getChaptersByMangaId(mangaId);
 
   const [totalFavorites, setTotalFavorites] = useState(0);
-  const genreMap = getGenres().reduce((acc, genre) => {
-    acc[genre.id] = genre.name;
-    return acc;
-  }, {});
+  const [genreNames, setGenreNames] = useState([]);
+
+  useEffect(() => {
+    if (!mangaId) return;
+
+    const fetchTotalFavorites = async () => {
+      const count = await getTotalFavorites(mangaId);
+      setTotalFavorites(count);
+    };
+
+    const fetchGenres = async () => {
+      const genres = await getGenresByMangaId(mangaId);
+      setGenreNames(genres);
+    };
+
+    fetchTotalFavorites();
+    fetchGenres();
+  }, [mangaId]);
 
   if (!manga) {
     return (
@@ -50,18 +64,6 @@ const MangaDetail = () => {
 
   const firstChapter = chapters[chapters.length - 1];
   const latestChapter = chapters[0];
-  const genreNames = (manga.genreIds || []).map((id) => genreMap[id]).filter(Boolean);
-
-  useEffect(() => {
-    const fetchTotalFavorites = async () => {
-      const count = await getTotalFavorites(mangaId);
-      setTotalFavorites(count);
-    };
-
-    if (mangaId) {
-      fetchTotalFavorites();
-    }
-  }, [mangaId]);
 
   return (
     <div className="min-h-screen bg-neutral-900 px-6 py-8 text-white md:px-8">
@@ -90,7 +92,7 @@ const MangaDetail = () => {
             <div className="flex items-start gap-3">
               <FaTags className="mt-1 text-sky-400" />
               <span>
-                <b>Thể loại:</b> {genreNames.length ? genreNames.join(" - ") : "Đang cập nhật"}
+                <b>Thể loại:</b> {genreNames.length ? genreNames.map((genre) => genre.genre_name).join(" - ") : "Đang cập nhật"}
               </span>
             </div>
             <div className="flex items-start gap-3">

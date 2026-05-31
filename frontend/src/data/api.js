@@ -217,11 +217,80 @@ export const getReaderPages = (mangaId, chapterId) => {
   }));
 };
 
-export const getGenres = () => mockData.genres;
+export const normalizeGenre = (genre = {}) => ({
+  id: Number(genre.id ?? genre.genre_id),
+  name: genre.name ?? genre.genre_name ?? "",
+  description: genre.description ?? genre.genre_description ?? "",
+});
+
+export const normalizeManga = (manga = {}) => ({
+  id: Number(manga.manga_id ?? manga.id),
+  manga_id: Number(manga.manga_id ?? manga.id),
+  title: manga.manga_title ?? manga.title ?? "",
+  slug: manga.manga_slug ?? manga.slug ?? "",
+  author: manga.manga_author ?? manga.author ?? "",
+  summary: manga.manga_summary ?? manga.summary ?? "",
+  cover: manga.manga_cover_image ?? manga.cover ?? "",
+  status: manga.manga_status ?? manga.status ?? "",
+  publish_year: manga.publish_year,
+  avg_rating: Number(manga.avg_rating ?? 0),
+  rating_count: Number(manga.rating_count ?? 0),
+  total_views: Number(manga.total_views ?? 0),
+  updated_at: manga.updated_at,
+});
+
+export const getGenres = async () => {
+  try {
+    const data = await request('/api/genres/get-genres', {
+      method: 'GET'
+    });
+    const genres = (data.genres || []).map(normalizeGenre).filter((genre) => genre.id);
+    if (genres.length) return genres;
+  } catch (error) {
+    console.error('Lỗi lấy danh sách thể loại:', error);
+  }
+  return mockData.genres;
+};
+
+export const getGenreById = async (genreId) => {
+  try {
+    const data = await request(`/api/genres/get-genre/${genreId}`, {
+      method: 'GET'
+    });
+    if (data.genre) return normalizeGenre(data.genre);
+  } catch (error) {
+    console.error('Lỗi lấy thể loại:', error);
+  }
+  return mockData.genres.find((genre) => genre.id === Number(genreId)) || null;
+};
+
+
 
 export const getAuthors = () => mockData.authors;
 
-export const getMangasByGenre = (genreId) => {
+export const getGenresByMangaId = async (mangaId) => {
+  try {
+    const data = await request(`/api/genres/get-genres/${mangaId}`, {
+      method: 'GET'
+    });
+    return data.genres || [];
+  } catch (error) {
+    console.error('Lỗi lấy danh sách thể loại của truyện:', error);
+    return [];
+  }
+};
+
+export const getMangasByGenre = async (genreId) => {
+  try {
+    const data = await request(`/api/genres/mangas-by-genre/${genreId}`, {
+      method: 'GET'
+    });
+    const mangas = (data.mangas || []).map(normalizeManga).filter((manga) => manga.id);
+    if (mangas.length) return mangas;
+  } catch (error) {
+    console.error('Lỗi lấy truyện theo thể loại:', error);
+  }
+
   const ids = mockData.mangaByGenre[String(genreId)] || [];
   return mockData.allMangas.filter((manga) => ids.includes(manga.id) || manga.genreIds?.includes(Number(genreId)));
 };
