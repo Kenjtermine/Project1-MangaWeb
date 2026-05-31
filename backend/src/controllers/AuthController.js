@@ -213,14 +213,18 @@ async function updateUserAccess(req, res, next) {
       return res.status(400).json({ message: 'At least one field are required' });
     }
 
+    const allowedRoles = ['user', 'poster', 'admin'];
+
     if (!isAdmin) {
       if (isBanned !== undefined) {
         return res.status(403).json({ message: 'You are not allowed to change ban status' });
       }
 
-      if (userRole && userRole !== 'poster' && userRole !== 'poster') {
+      if (userRole && userRole !== 'poster') {
         return res.status(403).json({ message: 'You are not allowed to assign this role' });
       }
+    } else if (userRole !== undefined && !allowedRoles.includes(userRole)) {
+      return res.status(400).json({ message: 'Vai trò không hợp lệ' });
     }
 
     const user = await db.query(
@@ -231,13 +235,24 @@ async function updateUserAccess(req, res, next) {
     if (user.rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const isBannedParam = isBanned !== undefined ? isBanned : null;
-    const userRoleParam = userRole !== undefined ? 'poster' : null;
+
+    if (isAdmin && Number(targetUserId) === Number(currentUser.user_id) && userRole === 'user') {
+      return res.status(400).json({ message: 'Không thể tự hạ quyền admin của chính mình' });
+    }
+
+    const isBannedParam = isBanned !== undefined ? Boolean(isBanned) : null;
+    let userRoleParam = null;
+
+    if (userRole !== undefined) {
+      userRoleParam = isAdmin ? userRole : 'poster';
+    }
 
     const updatedUser = await db.query(
       `UPDATE users 
       SET is_banned = COALESCE($1, is_banned), 
-          user_role = COALESCE($2, user_role) 
+          user_role = COALESCE($2, user_role),
+          refresh_token = CASE WHEN $1 = true THEN NULL ELSE refresh_token END,
+          updated_at = NOW()
       WHERE user_id = $3 
       RETURNING *`,
       [isBannedParam, userRoleParam, targetUserId]

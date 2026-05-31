@@ -13,6 +13,7 @@ const ratingRoutes = require('./routes/rating.routes');
 const nofiticationRoutes = require('./routes/nofitication.routes');
 const mangaRoutes = require('./routes/manga.routes');
 const genreRoutes = require('./routes/genre.routes');
+const adminRoutes = require('./routes/admin.routes');
 require('./services/nofitication.service');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/rating', ratingRoutes);
 app.use('/api/nofitication', nofiticationRoutes);
 app.use('/api/mangas', mangaRoutes);
 app.use('/api/genres', genreRoutes);
+app.use('/api/admin', adminRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

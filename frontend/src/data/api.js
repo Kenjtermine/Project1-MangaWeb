@@ -799,3 +799,100 @@ export const becomeUploader = async () => {
     return { ok: false, message: error.message || "Đăng nhập thất bại." };
   }
 };
+
+// --- Admin APIs ---
+export const adminGetStats = async () => {
+  try {
+    const data = await request("/api/admin/stats", { method: "GET" });
+    return { ok: true, stats: data.stats };
+  } catch (error) {
+    return { ok: false, stats: null, message: error.message };
+  }
+};
+
+export const adminGetUsers = async () => {
+  try {
+    const data = await request("/api/admin/users", { method: "GET" });
+    return { ok: true, users: data.users || [] };
+  } catch (error) {
+    return { ok: false, users: [], message: error.message };
+  }
+};
+
+export const adminUpdateUserAccess = async ({ userId, userRole, isBanned }) => {
+  try {
+    const body = { userId: Number(userId) };
+    if (userRole !== undefined) body.userRole = userRole;
+    if (isBanned !== undefined) body.isBanned = isBanned;
+
+    const data = await request("/api/admin/users/access", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    return { ok: true, user: data.user, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminGetGenres = async () => {
+  try {
+    const data = await request("/api/admin/genres", { method: "GET" });
+    return { ok: true, genres: (data.genres || []).map(normalizeGenre) };
+  } catch (error) {
+    return { ok: false, genres: [], message: error.message };
+  }
+};
+
+export const adminCreateGenre = async ({ name, description }) => {
+  try {
+    const data = await request("/api/admin/genres", {
+      method: "POST",
+      body: JSON.stringify({ genre_name: name, genre_description: description || null }),
+    });
+    return { ok: true, genre: normalizeGenre(data.genre) };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminUpdateGenre = async (genreId, { name, description }) => {
+  try {
+    const data = await request(`/api/admin/genres/${genreId}`, {
+      method: "PUT",
+      body: JSON.stringify({ genre_name: name, genre_description: description }),
+    });
+    return { ok: true, genre: normalizeGenre(data.genre) };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminDeleteGenre = async (genreId) => {
+  try {
+    const data = await request(`/api/admin/genres/${genreId}`, { method: "DELETE" });
+    return { ok: true, message: data.message };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};
+
+export const adminGetComments = async ({ search = "", limit = 50 } = {}) => {
+  try {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (search) params.set("search", search);
+    const data = await request(`/api/admin/comments?${params}`, { method: "GET" });
+    return { ok: true, comments: data.comments || [] };
+  } catch (error) {
+    return { ok: false, comments: [], message: error.message };
+  }
+};
+
+export const adminDeleteComment = async (commentId) => {
+  try {
+    await request(`/api/admin/comments/${commentId}`, { method: "DELETE" });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
+};

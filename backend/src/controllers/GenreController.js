@@ -12,11 +12,53 @@ async function getAllGenres(req, res, next) {
 
 async function createGenre(req, res, next) {
   try {
-    const { genre_name } = req.body;
-    const query = 'INSERT INTO genres (genre_name) VALUES ($1) RETURNING *';
-    const result = await db.query(query, [genre_name]);
+    const genreName = (req.body.genre_name || req.body.name || '').trim();
+    const genreDescription = req.body.genre_description ?? req.body.description ?? null;
+
+    if (!genreName) {
+      return res.status(400).json({ message: 'Tên thể loại là bắt buộc' });
+    }
+
+    const result = await db.query(
+      'INSERT INTO genres (genre_name, genre_description) VALUES ($1, $2) RETURNING *',
+      [genreName, genreDescription]
+    );
     return res.status(201).json({ genre: result.rows[0] });
   } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Thể loại đã tồn tại' });
+    }
+    return next(error);
+  }
+}
+
+async function updateGenre(req, res, next) {
+  try {
+    const { genreId } = req.params;
+    const genreName = req.body.genre_name ?? req.body.name;
+    const genreDescription = req.body.genre_description ?? req.body.description;
+
+    const result = await db.query(
+      `
+        UPDATE genres
+        SET
+          genre_name = COALESCE($1, genre_name),
+          genre_description = COALESCE($2, genre_description)
+        WHERE genre_id = $3
+        RETURNING *
+      `,
+      [genreName?.trim() || null, genreDescription ?? null, genreId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy thể loại' });
+    }
+
+    return res.status(200).json({ genre: result.rows[0] });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'Thể loại đã tồn tại' });
+    }
     return next(error);
   }
 }
@@ -24,9 +66,13 @@ async function createGenre(req, res, next) {
 async function deleteGenre(req, res, next) {
   try {
     const genreId = req.params.genreId ?? req.body.genre_id;
-    const query = 'DELETE FROM genres WHERE genre_id = $1 RETURNING *';
-    const result = await db.query(query, [genreId]);
-    return res.status(200).json({ genre: result.rows[0] });
+    const result = await db.query('DELETE FROM genres WHERE genre_id = $1 RETURNING *', [genreId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy thể loại' });
+    }
+
+    return res.status(200).json({ message: 'Đã xóa thể loại', genre: result.rows[0] });
   } catch (error) {
     return next(error);
   }
@@ -93,6 +139,7 @@ async function getMangasByGenreId(req, res, next) {
 module.exports = {
     getAllGenres,
     createGenre,
+    updateGenre,
     deleteGenre,
     getGenreById,
     getGenresByMangaId,

@@ -19,8 +19,11 @@ import ChapterReader from "./pages/manga/ChapterReader";
 
 import CreatorDashboard from "./pages/admin/CreatorDashboard"; 
 import AdminLayout from "./layouts/AdminLayout";
+import AdminRoute from "./components/admin/AdminRoute";
+import AdminOverview from "./pages/admin/AdminOverview";
 import CommentManager from "./pages/admin/CommentManager";
-import UserManager from "./pages/admin/UserManager"
+import UserManager from "./pages/admin/UserManager";
+import GenreManager from "./pages/admin/GenreManager";
 
 import Sandbox from "./pages/Sandbox"; // Import trang sandbox để test component mới
 
@@ -54,12 +57,13 @@ function App() {
 
         {/* Route sandbox để test component mới, xem hiển thị hay gì đó cứ bỏ vào đây, ta sẽ xóa route này khi xong project */}
 
-        <Route path ="/admin" element={<AdminLayout/>}>
-          <Route path="comments" element={<CommentManager />} />
-          {/* Các route quản trị khác sẽ được thêm vào đây */}
-          <Route path="users" element={<UserManager/>}/>
-         
-        
+        <Route path="/admin" element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminOverview />} />
+            <Route path="users" element={<UserManager />} />
+            <Route path="genres" element={<GenreManager />} />
+            <Route path="comments" element={<CommentManager />} />
+          </Route>
         </Route>
       </Routes>
     </Router>
