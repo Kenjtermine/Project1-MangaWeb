@@ -1,3 +1,5 @@
+require('dotenv').config(); //  BẮT BUỘC PHẢI ĐẶT TRÊN CÙNG để nạp biến môi trường trước
+
 const app = require('./app');
 const env = require('./config/env');
 const { connectDB } = require('./config/db');

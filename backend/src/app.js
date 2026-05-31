@@ -29,7 +29,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/favorite', favoriteRoutes);
 app.use('/api/rating', ratingRoutes);
 app.use('/api/nofitication', nofiticationRoutes);
-app.use('/api/mangas', mangaRoutes);
+app.use('/api/manga', mangaRoutes);
 app.use('/api/genres', genreRoutes);
 app.use(notFound);
 app.use(errorHandler);

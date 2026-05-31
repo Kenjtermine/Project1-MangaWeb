@@ -45,7 +45,12 @@ async function getGenreById(req, res, next) {
 
 async function getGenresByMangaId(req, res, next) {
   try {
-    const { mangaId } = req.params;
+    //  SỬA DÒNG NÀY: Lấy id từ params, nếu req.params.mangaId không có thì lấy req.params.id
+    const mangaId = req.params.mangaId || req.params.id; 
+    
+    // Log ra terminal để kiểm tra xem Backend đã bốc đúng ID của bộ truyện chưa
+    console.log("🔍 Đang tìm thể loại cho Manga ID thực tế nhận được:", mangaId);
+
     const query = `
       SELECT g.genre_id, g.genre_name, g.genre_description
       FROM genres g
@@ -56,6 +61,7 @@ async function getGenresByMangaId(req, res, next) {
     const result = await db.query(query, [mangaId]);
     return res.status(200).json({ genres: result.rows });
   } catch (error) {
+    console.error("❌ LỖI TẠI GET GENRES BY MANGA ID:", error.message);
     return next(error);
   }
 }
