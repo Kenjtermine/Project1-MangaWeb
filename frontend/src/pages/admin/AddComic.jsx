@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Công cụ để chuyển trang
-import { createNewManga } from '../../data/api';
+import { useNavigate } from 'react-router-dom';
+import { createNewManga, getCurrentUser } from '../../data/api'; 
 import mockData from '../../data/mockData.json';
 
 const genresList = mockData.genres;
 
 const AddComic = () => {
-  const navigate = useNavigate(); // Khởi tạo công cụ điều hướng
+  const navigate = useNavigate(); 
   const [formData, setFormData] = useState({ title: '', author: '', description: '', category: '' });
   const [coverImage, setCoverImage] = useState(null);
   
@@ -34,8 +34,18 @@ const AddComic = () => {
   const handleSubmit = async (e) => { 
     e.preventDefault(); 
     
+    // 1. Lấy thông tin user đang đăng nhập
+    const user = getCurrentUser();
+
     if (!formData.title || !formData.author) {
       setError('Vui lòng nhập đầy đủ Tên truyện và Tác giả!');
+      setSuccess('');
+      return;
+    }
+
+    // 2. Chặn lại nếu không tìm thấy ID người dùng (tránh lỗi NULL database)
+    if (!user || !user.user_id) {
+      setError('Lỗi: Không tìm thấy thông tin tài khoản. Vui lòng đăng nhập lại!');
       setSuccess('');
       return;
     }
@@ -49,6 +59,9 @@ const AddComic = () => {
     payload.append('summary', formData.description); 
     payload.append('category', formData.category);
     
+    // 3. QUAN TRỌNG NHẤT: Gắn poster_id vào kiện hàng để gửi cho Backend
+    payload.append('poster_id', user.user_id);
+    
     if (coverImage) {
       payload.append('coverImage', coverImage);
     }
@@ -61,7 +74,6 @@ const AddComic = () => {
       setCoverImage(null);
     } else {
       setError(res.message || 'Lưu truyện thất bại, vui lòng thử lại.');
-      // Xóa chữ "Đang tải ảnh..." nếu bị lỗi
       setSuccess(''); 
     }
   };
@@ -102,11 +114,10 @@ const AddComic = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh bìa (Tối đa 2MB)</label>
-          <input type="file" accept="image/png, image/jpeg" onChange={handleImageChange} className="w-full border border-gray-300 p-2 rounded text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+          <input type="file" accept="image/png, image/jpeg, image/webp " onChange={handleImageChange} className="w-full border border-gray-300 p-2 rounded text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">
-          {/* Nút Hủy đã được gắn lệnh quay lại trang trước */}
           <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 font-medium">Hủy bỏ</button>
           <button type="submit" className="px-6 py-2 bg-blue-600 rounded text-white hover:bg-blue-700 font-medium shadow-sm">Lưu truyện</button>
         </div>
