@@ -270,7 +270,7 @@ async function getDashboardRankings(req, res, next) {
 }
 
 // ==========================================
-// EXPORT TẤT CẢ RA NGOÀI
+// EXPORT TẤT CẢ RA NGOÀI (Chắc chắn đầy đủ)
 // ==========================================
 module.exports = {
   createManga,
