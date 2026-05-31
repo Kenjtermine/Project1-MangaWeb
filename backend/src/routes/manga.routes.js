@@ -16,7 +16,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'mangaweb_covers', // Ảnh sẽ vào thư mục này
+    folder: 'mangaweb_covers', 
     allowedFormats: ['jpg', 'png', 'jpeg', 'webp'],
   },
 });

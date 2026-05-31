@@ -191,8 +191,6 @@ async function getMangaById(req, res, next) {
 // ==========================================
 // PHẦN 3: TÍNH NĂNG MỚI (LOG VIEW & BẢNG XẾP HẠNG)
 // ==========================================
-
-// Ghi nhận lượt xem và tự động cộng dồn view
 async function logView(req, res, next) {
   try {
     const manga_id = req.body.manga_id ? String(req.body.manga_id) : null;
@@ -202,13 +200,11 @@ async function logView(req, res, next) {
       return res.status(400).json({ message: 'Thiếu thông tin manga_id' });
     }
 
-    // 1. Lưu log vào manga_views để làm Dashboard
     await db.query(
       `INSERT INTO manga_views (manga_id, chapter_id) VALUES ($1, $2)`,
       [manga_id, chapter_id]
     );
 
-    // 2. Cộng view trực tiếp vào bảng manga
     await db.query(
       `UPDATE manga SET total_views = COALESCE(total_views, 0) + 1 WHERE manga_id = CAST($1 AS INTEGER)`,
       [manga_id]
@@ -221,7 +217,6 @@ async function logView(req, res, next) {
   }
 }
 
-// Lấy dữ liệu Bảng xếp hạng an toàn
 async function getDashboardRankings(req, res, next) {
   try {
     const dailyQuery = `
