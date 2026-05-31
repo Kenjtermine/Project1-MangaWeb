@@ -1,7 +1,6 @@
 import mockData from "./mockData.json";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-
 const STORAGE_KEYS = {
   authToken: "authToken",
   refreshToken: "refreshToken",
@@ -769,6 +768,70 @@ export const createNewChapter = async (payload) => {
   } catch (error) {
     console.error("Lỗi khi gọi API createNewChapter:", error);
     return { ok: false, message: error.message };
+  }
+};
+export const fetchMangaList = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi lấy danh sách truyện');
+    }
+    
+    return { ok: true, mangas: data.data || [] }; 
+  } catch (error) {
+    console.error("Lỗi fetchMangaList:", error);
+    return { ok: false, mangas: [] };
+  }
+};
+// 1. Hàm lấy thông tin chi tiết 1 truyện
+export const fetchMangaById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/id/${id}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi lấy thông tin truyện');
+    }
+    
+    return { ok: true, manga: data.data }; 
+  } catch (error) {
+    console.error("Lỗi fetchMangaById:", error);
+    return { ok: false, manga: null };
+  }
+};
+
+// 2. Hàm lấy danh sách chương của truyện đó
+export const fetchChaptersByMangaId = async (mangaId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/${mangaId}/chapters`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error('Lỗi lấy chapter');
+    }
+    
+    return data.data || [];
+  } catch (error) {
+    console.error("Lỗi fetchChaptersByMangaId:", error);
+    return [];
+  }
+};
+// Hàm lấy danh sách trang ảnh của 1 chương
+export const fetchPagesByChapterId = async (chapterId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/mangas/chapters/${chapterId}/pages`);
+    const data = await response.json();
+    
+    if (!response.ok) {
+        throw new Error('Lỗi lấy danh sách trang ảnh');
+    }
+    
+    return data.data || [];
+  } catch (error) {
+    console.error("Lỗi fetchPagesByChapterId:", error);
+    return [];
   }
 };
 export const becomeUploader = async () => {

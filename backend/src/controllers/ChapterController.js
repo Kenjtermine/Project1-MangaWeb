@@ -1,5 +1,4 @@
 const db = require('../config/db'); 
-
 // Hàm tạo slug cho chương
 const generateSlug = (title) => {
     return title ? title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') : '';
@@ -78,10 +77,52 @@ async function createChapter(req, res, next) {
     }
 }
 
-// ==========================================
-// EXPORT CÁC HÀM RA NGOÀI
-// ==========================================
+// Hàm lấy danh sách chương của 1 truyện cụ thể
+async function getChaptersByMangaId(req, res, next) {
+  try {
+    const { mangaId } = req.params;
+    
+    const query = `
+      SELECT * FROM chapters 
+      WHERE manga_id = $1 
+      ORDER BY chapter_number DESC
+    `;
+    const result = await db.query(query, [mangaId]);
+    
+    return res.status(200).json({
+      message: 'Lấy danh sách chương thành công',
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Lỗi getChaptersByMangaId:", error);
+    return next(error);
+  }
+}
+// Hàm lấy toàn bộ trang ảnh của 1 chương cụ thể
+async function getPagesByChapterId(req, res, next) {
+  try {
+    const { chapterId } = req.params;
+    
+    const query = `
+      SELECT * FROM pages 
+      WHERE chapter_id = $1 
+      ORDER BY page_number ASC
+    `;
+    const result = await db.query(query, [chapterId]);
+    
+    return res.status(200).json({
+      message: 'Lấy danh sách trang thành công',
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Lỗi getPagesByChapterId:", error);
+    return next(error);
+  }
+}
+
+// NHỚ XUẤT HÀM RA Ở CUỐI FILE:
 module.exports = {
-    viewCountChapter,
-    createChapter
+  createChapter,
+  getChaptersByMangaId,
+  getPagesByChapterId // <-- Thêm dòng này
 };
