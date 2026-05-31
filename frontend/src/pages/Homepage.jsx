@@ -23,7 +23,7 @@ const Homepage = () => {
     <div className="flex-col">
       <div className="flex-1 flex flex-col bg-neutral-900 text-white p-8">
         <h2 className="text-2xl font-semibold mb-6 text-white">Truyện hot hôm nay</h2>
-        <HeroCarousel />
+        <HeroCarousel mangaList={featuredManga} />
       </div>
 
       <main className="flex-1 p-6">

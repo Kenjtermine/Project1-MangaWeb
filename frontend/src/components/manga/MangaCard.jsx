@@ -40,7 +40,8 @@ const MangaCard = ({ manga, className = "" }) => {
             className="h-52 w-full md:h-64 cursor-pointer"
             onMouseEnter={() => setIsHovered(true)}
         >
-            <img src={manga.cover} alt={manga.title} className="h-full w-full object-cover" />
+            <img src={manga.coverImage} alt={manga.title} />
+            <h3>{manga.title}</h3>
         </div>
 
         {/* VÙNG THÔNG TIN BÊN DƯỚI (Trỏ chuột vào đây sẽ không kích hoạt Overlay) */}

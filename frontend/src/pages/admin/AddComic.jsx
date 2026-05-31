@@ -51,7 +51,7 @@ const AddComic = () => {
     }
 
     setError('');
-    setSuccess('Đang tải ảnh lên Cloudinary và lưu dữ liệu...');
+    setSuccess('Đang tải lên và lưu dữ liệu...');
     
     const payload = new FormData();
     payload.append('title', formData.title);

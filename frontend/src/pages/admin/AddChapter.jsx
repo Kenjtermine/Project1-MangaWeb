@@ -50,7 +50,7 @@ const AddChapter = () => {
     }
 
     setError('');
-    setSuccess('Đang tải ảnh lên Cloudinary và lưu dữ liệu... Vui lòng không đóng trang!');
+    setSuccess('Đang đăng truyện lên... Vui lòng không đóng trang!');
     
     const payload = new FormData();
     payload.append('manga_id', formData.comicId);

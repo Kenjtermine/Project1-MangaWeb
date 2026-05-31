@@ -8,7 +8,6 @@ const Ranking = () => {
     <div className="min-h-screen bg-neutral-900 px-8 py-8 text-white">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Bảng xếp hạng</h1>
-        <p className="mt-2 text-gray-300">Mock ranking dựa trên bảng manga_daily_views và total_views.</p>
       </div>
 
       <div className="space-y-4">
