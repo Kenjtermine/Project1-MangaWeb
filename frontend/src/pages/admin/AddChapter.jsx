@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-
+import { createNewChapter } from '../../data/api';
+import { useLocation, useNavigate } from 'react-router-dom';
 const AddChapter = () => {
-  const [formData, setFormData] = useState({ comicId: '', chapterNumber: '', chapterTitle: '' });
-  const [images, setImages] = useState([]); 
+  const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
+  const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const urlMangaId = searchParams.get('mangaId');
+  const [formData, setFormData] = useState({ 
+    comicId: urlMangaId || '', // Tự động điền số 18 vào ô chọn truyện
+    chapterNumber: '', 
+    chapterTitle: '' 
+  });
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -26,39 +34,45 @@ const AddChapter = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // NGOẠI LỆ 1: Bắt lỗi bỏ trống
+    // Validate
     if (!formData.comicId || !formData.chapterNumber) {
       setError('Vui lòng chọn Truyện và nhập Số chương!');
       setSuccess('');
       return;
     }
-
     if (images.length === 0) {
       setError('Vui lòng tải lên ít nhất 1 trang truyện!');
       setSuccess('');
       return;
     }
 
-    if (formData.chapterNumber === "1") {
-      setError('Chương này đã tồn tại, vui lòng kiểm tra lại!');
-      setSuccess('');
-      return;
-    }
-
     setError('');
-    setSuccess('Đang tải ảnh lên hệ thống...');
+    setSuccess('Đang tải ảnh lên Cloudinary và lưu dữ liệu... Vui lòng không đóng trang!');
     
-    console.log("=== DỮ LIỆU ĐĂNG CHƯƠNG ===");
-    console.log("Truyện ID:", formData.comicId);
-    console.log("Chương số:", formData.chapterNumber, "- Tên:", formData.chapterTitle);
-    console.log(`Đã đính kèm ${images.length} trang truyện.`);
+    const payload = new FormData();
+    payload.append('manga_id', formData.comicId);
+    payload.append('chapter_number', formData.chapterNumber);
+    payload.append('chapter_title', formData.chapterTitle);
 
-    setTimeout(() => {
-      setSuccess('Đăng chương thành công! (Dữ liệu đã in ra Console)');
-    }, 1500);
+    images.forEach((file) => {
+      payload.append('pages', file); 
+    });
+
+    // BẮN API
+    const res = await createNewChapter(payload);
+
+    if (res.ok) {
+      setSuccess('🎉 Đăng chương mới thành công rực rỡ!');
+      // Reset form sau khi đăng xong
+      setFormData({ ...formData, chapterNumber: '', chapterTitle: '' });
+      setImages([]);
+    } else {
+      setError(res.message || 'Có lỗi xảy ra khi lưu chương!');
+      setSuccess('');
+    }
   };
 
   return (
@@ -71,9 +85,8 @@ const AddChapter = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Chọn Truyện <span className="text-red-500">*</span></label>
-          <select name="comicId" onChange={handleInputChange} className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select   name="comicId"   value={formData.comicId}   onChange={handleInputChange}   disabled={!!urlMangaId}  className="w-full border border-gray-300 p-2.5 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" >
             <option value="">-- Chọn bộ truyện --</option>
-            {/* Tạm thời code cứng danh sách này, sau này sẽ dùng API gọi từ Database lên */}
             <option value="comic_001">Solo Leveling</option>
             <option value="comic_002">One Piece</option>
             <option value="comic_003">Demon Slayer</option>
@@ -94,7 +107,7 @@ const AddChapter = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tải lên các trang truyện <span className="text-red-500">*</span></label>
           {/* Thuộc tính 'multiple' cho phép quét chọn nhiều file cùng lúc */}
-          <input type="file" multiple accept="image/png, image/jpeg" onChange={handleMultipleImagesChange} className="w-full border border-gray-300 p-4 rounded bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer" />
+          <input type="file" multiple accept="image/png, image/jpeg, image/webp" onChange={handleMultipleImagesChange} className="w-full border border-gray-300 p-4 rounded bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer" />
           <p className="mt-2 text-sm text-gray-500">
             Đã chọn: <span className="font-bold text-blue-600">{images.length}</span> trang truyện.
           </p>

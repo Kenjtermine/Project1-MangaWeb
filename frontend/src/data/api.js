@@ -665,7 +665,43 @@ export const createNewManga = async (payload) => {
   }
 };
 // frontend/src/data/api.js
+export const fetchMyComics = async (posterId) => {
+  try {
+    const data = await request(`/api/mangas/my-comics?poster_id=${posterId}`, {
+      method: "GET",
+    });
+    
+    return { ok: true, mangas: data.mangas || [] };
+    
+  } catch (error) {
+    console.error("Lỗi kéo dữ liệu Studio:", error);
+    return { ok: false, mangas: [] };
+  }
+};
+export const createNewChapter = async (payload) => {
+  try {
+    const token = getAuthToken(); // Lấy token nếu Backend có yêu cầu bảo mật
 
+    const response = await fetch(`${API_BASE_URL}/api/mangas/chapters`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: payload,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Lỗi server');
+    }
+
+    return { ok: true, message: data.message, chapter: data.chapter };
+  } catch (error) {
+    console.error("Lỗi khi gọi API createNewChapter:", error);
+    return { ok: false, message: error.message };
+  }
+};
 export const becomeUploader = async () => {
   // const userId = getCurrentUserId();
   // if (!userId) return { ok: false, message: "Bạn cần đăng nhập trước." };

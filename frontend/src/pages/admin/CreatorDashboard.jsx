@@ -1,28 +1,34 @@
 import React, { useState, useEffect } from 'react'; 
 import { Link } from 'react-router-dom';
-import { getCurrentUser, becomeUploader } from '../../data/api';
+import { getCurrentUser, becomeUploader, fetchMyComics } from '../../data/api'; 
 
 const CreatorDashboard = () => {
   const [user, setUser] = useState(getCurrentUser());
   const [myMangas, setMyMangas] = useState([]); 
+  const [isLoading, setIsLoading] = useState(true);
 
+  // KÉO DỮ LIỆU THẬT TỪ DATABASE NEON
   useEffect(() => {
-    if (user?.user_role === "poster") {
-      const savedMangas = JSON.parse(localStorage.getItem('mangas')) || [];
-      
-      const filtered = savedMangas.filter(m => 
-        m.uploader_username === user?.user_name || m.poster_username === user?.user_name
-      );
-      
-      setMyMangas(filtered);
-    }
+    const loadMangas = async () => {
+      // Nhớ dùng user_id nhé
+      if (user?.user_role === "poster" && user?.user_id) { 
+        // Gửi user_id xuống cho Backend
+        const res = await fetchMyComics(user.user_id);
+        if (res.ok) {
+          setMyMangas(res.mangas);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadMangas();
   }, [user]);
 
   const handleRegister = async () => {
     const res = await becomeUploader();
     if (res.ok) {
       setUser(getCurrentUser()); 
-      alert("Chúc mừng! Bạn đã trở thành Uploader của MangaWeb!");
+      alert("Chúc mừng! Bạn đã trở thành Creator của MangaWeb!");
       window.location.reload();
     }
     else {
@@ -30,7 +36,7 @@ const CreatorDashboard = () => {
     }
   };
 
-  // Chặn cửa bằng chữ 'poster'
+  // CHẶN CỬA BẰNG CHỮ 'poster'
   if (user && user.user_role !== "poster" ) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-10 bg-gray-50 min-h-screen">
@@ -63,16 +69,17 @@ const CreatorDashboard = () => {
         </Link>
       </div>
 
-      {/* HIỂN THỊ DANH SÁCH TRUYỆN */}
-      {myMangas.length > 0 ? (
+      {isLoading ? (
+        <div className="text-center py-10 text-gray-500">Đang tải kho truyện...</div>
+      ) : myMangas.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {myMangas.map((manga) => (
-            <div key={manga.id} className="bg-white p-4 rounded-xl shadow-sm border flex items-center space-x-4">
-              <img src={manga.coverImage} alt="" className="w-16 h-20 object-cover rounded shadow-sm" />
+            <div key={manga.manga_id} className="bg-white p-4 rounded-xl shadow-sm border flex items-center space-x-4">
+              <img src={manga.manga_cover_image} alt="cover" className="w-16 h-20 object-cover rounded shadow-sm" />
               <div className="flex-1">
-                <h4 className="font-bold text-gray-800 line-clamp-1">{manga.title}</h4>
-                <p className="text-xs text-blue-500 font-medium mt-1">{manga.status}</p>
-                <Link to={`/studio/add-chapter?mangaId=${manga.id}`} className="inline-block mt-2 text-xs text-sky-600 hover:underline">
+                <h4 className="font-bold text-gray-800 line-clamp-1">{manga.manga_title}</h4>
+                <p className="text-xs text-blue-500 font-medium mt-1">{manga.manga_status}</p>
+                <Link to={`/studio/add-chapter?mangaId=${manga.manga_id}`} className="inline-block mt-2 text-xs text-sky-600 hover:underline">
                   + Thêm chương mới
                 </Link>
               </div>
